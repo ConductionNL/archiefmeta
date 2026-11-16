@@ -1,0 +1,8 @@
+{
+  "label": "Evidence",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Raw test runs behind the claims on this site and in the issues to Nextcloud. Credentials are redacted; commands, outputs and versions are as run."
+  }
+}

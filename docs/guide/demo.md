@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+description: A ten-minute demo of archiefmeta for a live audience.
+---
+
 <!--
   - SPDX-FileCopyrightText: 2026 Conduction B.V.
   - SPDX-License-Identifier: AGPL-3.0-or-later

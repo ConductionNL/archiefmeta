@@ -1,0 +1,65 @@
+---
+title: Stand richting Nextcloud
+sidebar_position: 3
+description: De openbare issues en pull requests bij Nextcloud over archiefwaardige opslag, met status en de reacties van Nextcloud.
+---
+
+<div lang="nl">
+
+# Stand richting Nextcloud
+
+Stand: 16 november 2026. De status komt van GitHub op die dag.
+
+## Ingediend door dit project
+
+| Onderwerp | Item | Ingediend | Status |
+|---|---|---|---|
+| Metagegevens (verzoek 3) | [Reactie op PR 66355](https://github.com/nextcloud/server/pull/66355#issuecomment-6763982428), "feat: define a files metadata API" | 10 november 2026 | PR open, gericht op Nextcloud 36, review loopt. Nextcloud reageerde dezelfde dag. |
+| Bestuurde verwijdering (verzoek 4) | [Issue 66498](https://github.com/nextcloud/server/issues/66498), "Let a storage backend refuse or defer a deletion, with a reason shown to the user" | 10 november 2026 | Open, nog geen reactie op GitHub. Onderbouwd met [testresultaten](../evidence/s3-object-lock-deletes.md). |
+| Duurzame identiteit (verzoek 5) | [Issue 66499](https://github.com/nextcloud/server/issues/66499), "Durable object identity that survives a cache rebuild" | 10 november 2026 | Open. Nextcloud reageerde dezelfde dag. |
+
+De issues en de reactie bouwen voort op de technische notitie *Records-management backend support in Nextcloud* van Erik Hoekstra (gemeente Haarlem), 19 augustus 2026. We kondigden ze aan in het Talk-kanaal met Nextcloud, met de notitie als bijlage.
+
+## Reacties van Nextcloud op GitHub
+
+**Op PR 66355** ([reactie van susnux](https://github.com/nextcloud/server/pull/66355#issuecomment-6766271914), 10 november 2026):
+
+- De bestaande metadata-API is kaal. De nieuwe API voegt drie dingen toe: een vastgelegd schema, zodat andere apps de gegevens begrijpen zonder de maker te kennen; rechten op metagegevens, waarbij de app die een veld maakt bepaalt wie het mag wijzigen; en later een API om gegevens uit documenten te halen en erin te schrijven.
+- Bron per waarde kan via de actor, maar hoort volgens hem in de auditlog, niet in de metagegevens zelf.
+- Waarden die een provider zelf aanlevert: metagegevens worden altijd via de API opgeslagen, en die opgeslagen versie is de bron van waarheid. Hij ziet niet waarom een bewaardatum niet zo opgeslagen kan worden.
+- Meerdere waarden per veld: mogelijk als er een echte use case is. Nextcloud begint met een basisset typen, omdat een type toevoegen makkelijk is en een type weghalen de API breekt.
+
+**Op issue 66499** ([reactie van susnux](https://github.com/nextcloud/server/issues/66499#issuecomment-6766653823), 10 november 2026):
+
+- Het `fileid` hoort al stabiel te zijn. Is het dat niet, dan is dat een fout die opgelost moet worden. Bestanden die buiten Nextcloud om worden verplaatst, vallen erbuiten.
+- `filecache` is geen cache maar de hoofdtabel van het bestandssysteem. Die leegmaken staat gelijk aan het resetten van de installatie. Bij verlies is het antwoord een back-up terugzetten.
+- Bij migratie naar een andere installatie gaat de database altijd mee.
+
+Wat dat voor ons betekent: de term "cache rebuild" in issue 66499 was niet goed gekozen. De vraag die overblijft is een identificatie per record die gelijk blijft over versies heen. Onze tests laten wel zien dat bestanden nieuwe `fileid`'s krijgen als de opslag het verwijderen van een map weigert (scenario G in de [testresultaten](../evidence/s3-object-lock-deletes.md)).
+
+## Standpunten van Nextcloud in overleg
+
+Nextcloud gaf in overleg aan dat:
+
+1. bestuurde verwijdering volgens Nextcloud loopt via Nextcloud Governance (retentielabels, legal hold), in de permissielaag;
+2. Nextcloud deze cyclus werkt aan bestandsidentiteit op basis van hashes;
+3. de schema-API (PR 66355) bedoeld is voor Governance-labels en voor het inbedden van metagegevens in documenten. Een gebruikersinterface laat Nextcloud bewust over aan integratie-apps.
+
+Punt 1 zet keuze (a) uit de [D1-analyse](./d1-analyse.mdx) onder druk. Het besluit daarover ligt bij opdrachtgever en Product Owner. Punt 3 past bij de route die we voor D3 kozen: een integratie-app.
+
+## Bestaande items bij Nextcloud
+
+| Item | Onderwerp | Status | Waarom relevant |
+|---|---|---|---|
+| [Issue 43351](https://github.com/nextcloud/server/issues/43351) | Metagegevens kunnen via PROPPATCH maar één waarde tegelijk zetten; het wijzigrecht valt terug op 0 en het verzoek faalt | Open (sinds februari 2024) | Een geweigerde wijziging geeft HTTP 500 in plaats van 403 |
+| [PR 55382](https://github.com/nextcloud/server/pull/55382) | Live-photo-metagegevens zetten met bewerkrechten; daarvoor gaf PROPPATCH een `FilesMetadataException` en HTTP 500 | Gemerged op 7 oktober 2025 | Zelfde foutpad: een weigering komt als 500 bij de client |
+| [Issue 31373](https://github.com/nextcloud/server/issues/31373) | `fileid` van lokale externe opslag verandert, gedeelde links breken | Gesloten (februari 2022) | Stabiliteit van het `fileid` |
+| [Issue 31870](https://github.com/nextcloud/server/issues/31870) | `fileid` verandert bij verplaatsen in of uit een share met objectopslag als primaire opslag | Open (sinds april 2022) | Stabiliteit van het `fileid` |
+| [Issue 59345](https://github.com/nextcloud/server/issues/59345) | Versleutelingssleutels opslaan per `fileid` in plaats van per pad | Open (sinds maart 2026) | Leunt op een stabiel `fileid` |
+| [RFC 65395](https://github.com/nextcloud/server/issues/65395) | Eén bestandsweergave voor DAV en PHP via node attribute providers | Open (sinds oktober 2026) | Een provider die attributen bij het lezen levert, past bij waarden uit de opslaglaag |
+
+## Afspraken
+
+Er zijn nog geen schriftelijke afspraken met Nextcloud. D4 vraagt die, ook over beheer en onderhoud. In september 2026 zegde Nextcloud tijdens de Community Conference en Contributor Week in Berlijn toe twee essentiële core-wijzigingen op te nemen in het releaseplan, met de februari-release als doel. Welke twee dat zijn is nog niet bevestigd.
+
+</div>

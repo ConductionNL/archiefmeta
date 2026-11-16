@@ -1,3 +1,8 @@
+---
+sidebar_position: 3
+description: How archiefmeta reads, stores and shows archival metadata, and how it moves to the Nextcloud 36 schema API.
+---
+
 <!--
   - SPDX-FileCopyrightText: 2026 Conduction B.V.
   - SPDX-License-Identifier: AGPL-3.0-or-later

@@ -1,9 +1,18 @@
+---
+title: PROPPATCH refused
+sidebar_position: 2
+description: Live test of archiefmeta, 25 of 25 checks passed. Values from S3, every change refused.
+---
+
 <!--
   - SPDX-FileCopyrightText: 2026 Conduction B.V.
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# archiefmeta integration run 1794822239
+# Read-only metadata: live test run
+
+Output of `tests/Integration/live-test.sh` on 16 November 2026, run 1794822239, against Nextcloud 34.0.0 with S3 primary storage and an S3 external mount on MinIO with Object Lock. It shows that values come from the storage layer with their source, and that WebDAV PROPPATCH and the app API refuse every change, for the owner and for a share recipient with edit rights.
+
 Nextcloud: http://127.0.0.1:8310 (34.0.0)
 
 ## 1. Primary object storage: Object Lock + object tags
