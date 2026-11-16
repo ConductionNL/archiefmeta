@@ -1,0 +1,588 @@
+/* ============================================================
+   Canal footer — randomised Amsterdam trapgevel skyline above a
+   gray kade above the cobalt-900 canal. Each house is rendered
+   as a standalone <svg> (cloned from a <template> by footer.js)
+   so the skyline rolls a fresh sequence on every page-load.
+   Adjacent house wrappers overlap by 1px (margin-right: -1px)
+   to kill the white seam.
+
+   Colour rule: items IN the canal are KNVB orange, items ON the
+   kade are cobalt or vermilion. A handful of houses fly the
+   Dutch flag from a flagpole over their gable; the cruise boat
+   flies one too at the stern.
+   ============================================================ */
+
+.canal-footer { position: relative; color: white; isolation: isolate; }
+
+/* ---- Skyline (random row of standalone trapgevel SVGs) ---- */
+.canal-footer .skyline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  height: 152px;
+  overflow: hidden;
+}
+.canal-footer .house-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: -2px;        /* 2-px overlap closes the AA seam between facades */
+}
+.canal-footer .house {
+  display: block;
+  shape-rendering: geometricPrecision;
+}
+/* Each house's CSS dimensions = exactly 0.6 of its viewBox dims, so the row
+   stays compact AND every facade fills its own wrapper edge to edge. That
+   second part is not cosmetic bookkeeping: the svgs carry no
+   preserveAspectRatio, so they default to xMidYMid meet and are letterboxed
+   whenever the box aspect differs from the viewBox aspect. h-d was 102px
+   against a 90x180 viewBox, which scaled the drawing to 51px inside a 54px
+   box and left 1.5px of white down each side — enough to out-run the -2px
+   wrapper overlap and show as a seam. h-a was off by the same mistake, just
+   too little to see. Keep these at viewBox x 0.6 or the seams come back. */
+.canal-footer .h-a { width: 48px; height: 121.2px; }
+.canal-footer .h-b { width: 60px; height: 132px; }
+.canal-footer .h-c { width: 42px; height: 144px; }
+.canal-footer .h-d { width: 54px; height: 108px; }
+.canal-footer .h-e { width: 57px; height: 126px; }
+.canal-footer .house.flipped { transform: scaleX(-1); }
+
+/* "House #14" — the Conduction office. Centre of the skyline, always the
+   same facade (see OFFICE_HOUSE in canal-footer.js), painted in light
+   cobalt blue with a small white house-number next to the door. */
+.canal-footer .house-conduction .house path { fill: var(--c-blue-cobalt); }
+.canal-footer .house-conduction::after {
+  content: '14';
+  position: absolute;
+  bottom: 8px;
+  /* Anchored to the facade's own right edge. Offsetting from the centre
+     instead — the old calc(50% + 12px) — put the number at 33-43px along
+     a 42px-wide facade, hanging it over the house next door. Every door
+     renders 9.6px wide whatever the type, so 4px in from the right still
+     clears it on all five. */
+  right: 4px;
+  color: white;
+  font-family: var(--conduction-typography-font-family-base, 'Inter', system-ui, sans-serif);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ---- Kade (gray quay) with bikes + cars drifting along it ---- */
+.canal-footer .kade {
+  position: relative;
+  height: 30px;
+  background: #9b9da3;
+  overflow: hidden;
+}
+.canal-footer .kade::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(0,0,0,0.16);
+}
+.canal-footer .kade-items {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.canal-footer .ki {
+  position: absolute;
+  bottom: 4px;
+  will-change: transform;
+}
+/* Per-item animation directions; durations + delays come from inline-style
+   (set by the script so they're random + slow). */
+.canal-footer .ki-bike-1 { animation: ki-drift-r 90s linear infinite; }
+.canal-footer .ki-bike-2 { animation: ki-drift-l 90s linear infinite; }
+.canal-footer .ki-car-1  { animation: ki-drift-l 100s linear infinite; bottom: 6px; }
+.canal-footer .ki-car-2  { animation: ki-drift-r 100s linear infinite; bottom: 6px; }
+@keyframes ki-drift-r {
+  from { transform: translateX(-60px); }
+  to   { transform: translateX(100vw); }
+}
+@keyframes ki-drift-l {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(-60px); }
+}
+
+/* ---- Water (cobalt-900) with canal items + waves + footer text ---- */
+.canal-footer .water {
+  background: var(--c-cobalt-900);
+  padding: 88px 56px 28px;        /* extra top room reserves a band for the boats */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Boats, swimmer, hovercraft drifting on the canal surface. All orange. */
+.canal-footer .canal-items {
+  position: absolute;
+  left: 0; right: 0;
+  top: 0;
+  height: 76px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.canal-footer .ci {
+  position: absolute;
+  bottom: 6px;
+  will-change: transform;
+}
+.canal-footer .ci-cruise    { animation: ci-drift-r 220s linear infinite; bottom: 12px; }
+.canal-footer .ci-sloep     { animation: ci-drift-l 160s linear infinite; bottom: 18px; }
+.canal-footer .ci-row       { animation: ci-drift-r 260s linear infinite; bottom: 22px; }
+.canal-footer .ci-swim      { animation: ci-drift-r 400s linear infinite; bottom: 32px; }
+.canal-footer .ci-hover     { animation: ci-drift-l 120s linear infinite; bottom: 8px;  }
+.canal-footer .ci-periscope { animation: ci-drift-r 320s linear infinite; bottom: 4px;  }
+.canal-footer .ci-whale     { animation: ci-drift-l 280s linear infinite; bottom: 14px; }
+@keyframes ci-drift-r {
+  from { transform: translateX(-260px); }
+  to   { transform: translateX(calc(100vw + 60px)); }
+}
+@keyframes ci-drift-l {
+  from { transform: translateX(calc(100vw + 60px)); }
+  to   { transform: translateX(-260px); }
+}
+
+.canal-footer .canal-waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.11;
+  z-index: 0;
+}
+.canal-footer .canal-waves path {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linejoin: miter;
+  stroke-linecap: round;
+}
+.canal-footer .canal-waves .w1 { stroke-dasharray: 14 22; animation: canal-wave-flow  60s linear infinite; }
+.canal-footer .canal-waves .w2 { stroke-dasharray: 18 28; animation: canal-wave-flow 110s linear infinite reverse; }
+.canal-footer .canal-waves .w3 { stroke-dasharray: 22 36; animation: canal-wave-flow 160s linear infinite; }
+@keyframes canal-wave-flow { to { stroke-dashoffset: -360; } }
+
+.canal-footer .footer-grid,
+.canal-footer .legal-bar { position: relative; z-index: 2; }
+
+.canal-footer .footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  gap: 48px;
+  max-width: 1280px;
+  margin: 0 auto 48px;
+}
+.canal-footer .brand .wm {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.02em; color: white;
+  margin: 0 0 12px;
+}
+/* The cyan, because this footer paints its own cobalt-900 ground in both
+   themes. Nextcloud's own darker blue is 4.28:1 there, just under the
+   4.5:1 body text needs, and the footer is on every page of the site.
+   The cyan is 7.33:1. The hover rule below already knew this. */
+.canal-footer .next-blue { color: var(--c-nextcloud-cyan); }
+.canal-footer .brand p {
+  font-size: 14px; line-height: 1.55;
+  color: rgba(255,255,255,0.7);
+  max-width: 32ch; margin: 0 0 24px;
+}
+.canal-footer .brand .triad {
+  display: flex; gap: 16px;
+  font-family: var(--conduction-typography-font-family-code);
+  font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.canal-footer .brand .triad .h {
+  width: 10px; height: 12px;
+  clip-path: var(--hex-pointy-top);
+  background: var(--c-orange-knvb);
+  display: inline-block; margin-right: 6px;
+  vertical-align: middle;
+}
+/* "Conduction ♥ Nextcloud" citation: a vermillion-red heart between
+   the producer chain and the Nextcloud platform link. Sized to the
+   surrounding 11px caption with a small inline lift so the heart
+   centres on the cap-height. */
+.canal-footer .brand .triad .heart {
+  width: 11px; height: 11px;
+  color: var(--c-red-vermillion);
+  display: inline-block;
+  vertical-align: -1px;
+  margin: 0 2px;
+}
+/* Resting is the cyan for the same reason as above, 7.33:1 on this
+   ground against 4.28:1 for the darker blue. Hover moves to white, which
+   is the footer's own link colour (--ifm-footer-link-color), since cyan
+   is no longer available as the hover state. */
+.canal-footer .brand .triad a.next-blue {
+  color: var(--c-nextcloud-cyan);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+.canal-footer .brand .triad a.next-blue:hover {
+  color: var(--c-white);
+}
+.canal-footer .brand .socials {
+  display: flex; gap: 10px;
+  margin-top: 18px;
+}
+.canal-footer .brand .socials a {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.78);
+  text-decoration: none;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.canal-footer .brand .socials a:hover {
+  color: var(--c-orange-knvb);
+  border-color: var(--c-orange-knvb);
+  background: rgba(255,107,0,0.08);
+}
+.canal-footer .brand .socials svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; stroke-width: 1.8; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.canal-footer .brand .socials svg .filled { fill: currentColor; stroke: none; }
+
+/* House #14 (Conduction office) is clickable. */
+.canal-footer .house-conduction { cursor: pointer; }
+.canal-footer .house-conduction:hover .house path { filter: brightness(1.12); }
+
+/* Canal items respond to clicks (override the overlay's pointer-events). */
+.canal-footer .ci { cursor: pointer; pointer-events: auto; }
+
+/* The footer doubles as the game board, and the canal and the link columns
+   are one text flow — so a burst of sinking clicks used to highlight half the
+   footer, and a press on that highlight started a text drag that swallowed
+   every click after it. Nothing up here is worth selecting, so nothing up
+   here is selectable; canal-footer.js does the same at mousedown, and this
+   also stops the long-press callout on a phone.
+
+   The legal bar and the game-over card keep their text: they sit away from
+   the boats, so a selection there can't turn into a drag mid-game. */
+.canal-footer {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.canal-footer .legal-bar,
+.canal-footer .game-over {
+  -webkit-user-select: text;
+  user-select: text;
+}
+.canal-footer h4 {
+  font-family: var(--conduction-typography-font-family-code);
+  font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500; margin: 0 0 16px;
+}
+.canal-footer ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.canal-footer ul a {
+  color: rgba(255,255,255,0.85);
+  text-decoration: none; font-size: 14px;
+}
+.canal-footer ul a:hover { color: var(--c-orange-knvb); }
+
+.canal-footer .legal-bar {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  font-family: var(--conduction-typography-font-family-code);
+}
+.canal-footer .legal-bar .left, .canal-footer .legal-bar .right {
+  display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+}
+.canal-footer .legal-bar a { color: rgba(255,255,255,0.65); text-decoration: none; }
+.canal-footer .legal-bar a:hover { color: var(--c-orange-knvb); }
+.canal-footer .legal-bar .legal-links {
+  display: inline-flex; gap: 8px; align-items: center;
+}
+.canal-footer .legal-bar .legal-links .sep { opacity: 0.4; }
+.canal-footer .legal-bar .iso-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  font-family: var(--conduction-typography-font-family-code);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.85);
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.canal-footer .legal-bar .iso-badge:hover {
+  border-color: var(--c-orange-knvb);
+  color: var(--c-orange-knvb);
+}
+.canal-footer .legal-bar .iso-badge .iso-mark {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.canal-footer .legal-bar .iso-badge .iso-num {
+  opacity: 0.85;
+}
+.canal-footer .nlds-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: rgba(255,255,255,0.85);
+}
+.canal-footer .nlds-badge svg { width: 12px; height: 12px; stroke: var(--c-mint-500, #2E9866); stroke-width: 2; fill: none; }
+
+/* ============================================================
+   Mini-game HUD: timer (60s) + counter (100 → 0). Lives in the
+   top-right of the canal band. Hidden until the player sinks
+   their first boat — first sink kicks the game off. Every sink
+   (including the original fleet drifting at page load) ticks
+   the counter down by 1; the counter flashes orange on each tick.
+
+   Boss waves trigger off counter milestones:
+     - score === 10  → cruise-ship swarm (5 ships, HP 5 each)
+     - score === 1   → battleship boss (HP 10)
+   Spawned boats use Web Animations API so their drift duration
+   can scale with the per-game speed multiplier.
+   ============================================================ */
+.canal-footer .game-hud {
+  position: absolute;
+  top: 14px;
+  right: 56px;
+  z-index: 3;
+  display: flex;
+  gap: 36px;
+  font-family: var(--conduction-typography-font-family-code);
+  color: white;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+.canal-footer .game-hud.active { opacity: 1; transform: translateY(0); }
+.canal-footer .game-hud .hud-block { text-align: right; }
+.canal-footer .game-hud .hud-num {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: color 200ms ease;
+  /* Dark glow keeps the digits legible while bosses drift behind them. */
+  text-shadow: 0 1px 10px rgba(11,32,73,0.95), 0 0 4px rgba(11,32,73,0.7);
+}
+.canal-footer .game-hud .hud-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  margin-top: 6px;
+  text-shadow: 0 1px 6px rgba(11,32,73,0.95);
+}
+.canal-footer .game-hud .hud-counter.tick .hud-num { animation: hud-tick 420ms ease; }
+@keyframes hud-tick {
+  0%   { transform: scale(1);    color: white; }
+  35%  { transform: scale(1.45); color: var(--c-orange-knvb); }
+  100% { transform: scale(1);    color: white; }
+}
+.canal-footer .game-hud .hud-timer.urgent .hud-num {
+  color: #ff5544;
+  animation: hud-pulse 800ms ease infinite;
+}
+@keyframes hud-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* Game-over panel — appears below the HUD when timer hits 0
+   or the counter reaches 0 (battleship sunk = victory). */
+.canal-footer .game-over {
+  position: absolute;
+  top: 14px;
+  right: 56px;
+  z-index: 4;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-family: var(--conduction-typography-font-family-code);
+  color: white;
+  pointer-events: auto;
+  text-align: right;
+  display: none;
+  min-width: 160px;
+}
+.canal-footer .game-over.show { display: block; }
+.canal-footer .game-over .go-title {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-orange-knvb);
+  margin: 0 0 6px;
+}
+.canal-footer .game-over .go-stat {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+.canal-footer .game-over button {
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--c-orange-knvb);
+  color: var(--conduction-color-text-strong);
+  border: 0;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.canal-footer .game-over button:hover { filter: brightness(1.1); }
+
+/* Boss ships sit one layer above their spawned siblings so the
+   cruise-swarm and battleship draw on top of the regular drift. */
+.canal-footer .ci.boss { z-index: 2; }
+
+/* Damage flash on a multi-HP ship hit — pure filter so we don't
+   fight the WAAPI translateX animation. */
+.canal-footer .ci.damaged { animation: ci-damage 240ms ease; }
+@keyframes ci-damage {
+  0%, 100% { filter: none; }
+  35%      { filter: brightness(2.6) saturate(0.4) drop-shadow(0 0 6px rgba(255,255,255,0.7)); }
+}
+
+/* HP pips above bosses — orange dots that fade out on each hit. */
+.canal-footer .ci .hp-pips .pip {
+  transition: opacity 200ms ease, fill 200ms ease;
+}
+.canal-footer .ci .hp-pips .pip.hit {
+  opacity: 0.18;
+  fill: rgba(255,255,255,0.4);
+}
+
+/* ============================================================
+   Responsive collapse.
+
+   The grid above is five `fr` columns with a 48px gap inside 56px
+   side padding. An `fr` track carries an automatic min-content
+   floor, so the columns never shrink below their longest link
+   label ("OpenRegister", "Way of Work"): measured on a 390px
+   phone the footer demanded 773px and the site's
+   `overflow-x: clip` silently swallowed the difference. Three of
+   the five columns were off-screen with no way to scroll to them,
+   and the other two were cut off mid-word.
+
+   `minmax(0, …)` on every track below removes that floor so the
+   declared column count is actually honoured.
+   ============================================================ */
+
+/* Tablet: keep five columns but stop the gap eating the row. */
+@media (max-width: 1100px) {
+  .canal-footer .water { padding: 80px 32px 28px; }
+  .canal-footer .footer-grid {
+    grid-template-columns: 1.5fr repeat(4, minmax(0, 1fr));
+    gap: 32px;
+  }
+}
+
+/* Small tablet and large phone: two columns, brand across the top. */
+@media (max-width: 900px) {
+  .canal-footer .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 24px;
+    margin-bottom: 40px;
+  }
+  .canal-footer .brand { grid-column: 1 / -1; }
+}
+
+/* Phone: one column, and every link becomes a real touch target.
+   The link lists lose their 10px gap because the 44px row height
+   provides the separation. SC 2.5.8 (AA) sets the floor at 24px;
+   44px is the comfortable thumb target we aim for on controls. */
+@media (max-width: 600px) {
+  .canal-footer .water { padding: 72px 16px 24px; }
+
+  .canal-footer .footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .canal-footer ul { gap: 0; }
+  .canal-footer ul a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .canal-footer .brand p { max-width: none; }
+
+  /* Legal bar: stack the two halves instead of forcing them onto one
+     line, and give the legal links and ISO badges room to breathe. */
+  .canal-footer .legal-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .canal-footer .legal-bar .left,
+  .canal-footer .legal-bar .right {
+    gap: 12px;
+  }
+  /* Short labels fail on WIDTH, not height. "ISO" measured 21x44, and
+     SC 2.5.8 takes the smaller dimension, so the padding is what brings
+     it over 24. */
+  .canal-footer .legal-bar .legal-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 24px;
+    padding: 0 8px;
+  }
+
+  /* The "Conduction loves Nextcloud" citation is a 14px-tall caption
+     link. It reads as running text, but it is the only link in its
+     line, so it does not get the sentence exemption. */
+  .canal-footer .brand .triad a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+  }
+  .canal-footer .legal-bar .iso-badge {
+    min-height: 44px;
+    padding: 5px 12px;
+  }
+
+  /* Social and contact icons. 34px is above the 24px AA floor but below
+     a comfortable thumb, and these five sit side by side with a 10px
+     gap, which is where mis-taps happen. */
+  .canal-footer .brand .socials { gap: 12px; }
+  .canal-footer .brand .socials a {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* The mini-game HUD and its game-over panel are pinned to the old
+     56px gutter; bring them inside the narrower one so they cannot
+     hang off the edge of the canal band. */
+  .canal-footer .game-hud,
+  .canal-footer .game-over { right: 16px; }
+  .canal-footer .game-over { min-width: 0; max-width: calc(100vw - 32px); }
+}
