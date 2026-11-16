@@ -13,6 +13,10 @@ The values come from the storage layer. For a file on S3 that means Object Lock 
 
 This app is a proof of concept. It was built by Conduction for the Common Ground assignment "archiefwaardige opslag" (deliverable D3, backend metadata). Any government can use and change it under the AGPL.
 
+## Documentation and project notes
+
+The documentation site is [archiefmeta.conduction.nl](https://archiefmeta.conduction.nl). Its source is in [`docs/`](docs/): the user and admin guide, the architecture, the evidence from the test runs, and the project notes of the assignment (in Dutch): the D1 analysis, the progress notes, the state of the talks with Nextcloud and the MDTO alignment. To build it locally: `cd docs && npm ci --legacy-peer-deps && npm run build`.
+
 ## What it does
 
 - Adds a read-only **Archive** tab (Dutch: **Archief**) to the Files sidebar.
@@ -27,7 +31,7 @@ MDTO is the Dutch metadata standard for durable government information ("Metageg
 
 Nextcloud is adding a metadata schema API in Nextcloud 36 ([nextcloud/server#66355](https://github.com/nextcloud/server/pull/66355)). That API has no user interface on purpose. It expects an integration app for each use case. This is that app for archival metadata.
 
-Until that API ships, the app stores values with the existing core API `OCP\FilesMetadata\IFilesMetadataManager` (Nextcloud 28 and later). See [docs/architecture.md](docs/architecture.md) for how the switch works.
+Until that API ships, the app stores values with the existing core API `OCP\FilesMetadata\IFilesMetadataManager` (Nextcloud 28 and later). See [Architecture](https://archiefmeta.conduction.nl/architecture/) ([source](docs/architecture.md)) for how the switch works.
 
 ## Requirements
 
@@ -128,16 +132,16 @@ npm ci && npm run lint && npm run build
 tests/Integration/live-test.sh   # against a running instance, see below
 ```
 
-`tests/Integration/live-test.sh` runs against a live Nextcloud with S3 primary storage and an S3 external mount. It uploads files, sets tags and metadata with the MinIO client, refreshes, and tries to change values through PROPPATCH and the API. Requests, status codes and bodies go to `build/integration/evidence.md`. Its defaults match Conduction's test environment; override them with environment variables (see the top of the script).
+`tests/Integration/live-test.sh` runs against a live Nextcloud with S3 primary storage and an S3 external mount. It uploads files, sets tags and metadata with the MinIO client, refreshes, and tries to change values through PROPPATCH and the API. Requests, status codes and bodies go to `build/integration/evidence.md`. Its defaults match Conduction's test environment; override them with environment variables (see the top of the script). Credentials have no default: set `ADMIN_PASS`, `TEST_PASS`, `S3_KEY` and `S3_SECRET`.
 
-[docs/demo.md](docs/demo.md) is a short demo script for a live audience.
+[The demo script](https://archiefmeta.conduction.nl/guide/demo/) ([source](docs/guide/demo.md)) walks through the app for a live audience.
 
 ## Limitations
 
 - **Identity is not durable yet.** Without an identifier from the storage layer, `identificatie` shows the Nextcloud file ID with the instance ID. The tab says so. The file ID is unique within one instance only. Durable identity is under discussion with Nextcloud ([nextcloud/server#66499](https://github.com/nextcloud/server/issues/66499)).
 - **Values are a snapshot.** The app reads the storage layer on write, copy, move and `occ` refresh. A tag changed later in S3 shows after the next refresh. The read time in the tab tells you how old a value is.
 - **S3 only.** Other storage layers need their own source class. A register as source fits the same interface.
-- **Schema API switch planned.** The storage class moves to the Nextcloud 36 schema API once it is released. See [docs/architecture.md](docs/architecture.md).
+- **Schema API switch planned.** The storage class moves to the Nextcloud 36 schema API once it is released. See [Architecture](https://archiefmeta.conduction.nl/architecture/).
 - **No public share pages.** The tab is hidden on public share links.
 
 ## License

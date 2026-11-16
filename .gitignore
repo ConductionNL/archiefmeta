@@ -5,3 +5,6 @@
 /build/
 /js/
 .php-cs-fixer.cache
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/

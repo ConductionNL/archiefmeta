@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V.
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: Documentation
+
+# Builds the docs site on every pull request and publishes it to the
+# Cloudflare Worker behind archiefmeta.conduction.nl on every push to
+# development.
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+  deploy:
+    uses: ConductionNL/.github/.github/workflows/documentation.yml@main
+    # A reusable workflow receives no secrets by default. Without this block
+    # the publish step finds CF_API_TOKEN empty, skips itself, and the run
+    # finishes green having published nothing.
+    secrets:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    with:
+      cname: archiefmeta.conduction.nl
+      # Every host this worker answers on, in full: wrangler removes any
+      # host left out of this list.
+      docs-hosts: archiefmeta.conduction.nl
+      # Pinned. A derived worker name gets a green deploy that the custom
+      # domain never routes to.
+      worker-name: archiefmeta-docs

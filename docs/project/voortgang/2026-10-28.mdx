@@ -1,0 +1,42 @@
+---
+title: 28 oktober t/m 10 november 2026
+sidebar_position: 2
+description: Voortgangsnotitie archiefwaardige opslag, 28 oktober t/m 10 november 2026.
+---
+
+<div lang="nl">
+
+# Voortgang 28 oktober t/m 10 november 2026
+
+*Achteraf vastgelegd op 16 november 2026.*
+
+## Opgeleverd
+
+- [aanvullen: werk tussen 28 oktober en 8 november, als dat er was]
+- 5 november 2026: Nextcloud opende [PR 66355](https://github.com/nextcloud/server/pull/66355), een API voor metagegevens van bestanden, gericht op Nextcloud 36. Geen werk van ons, wel bepalend voor D3.
+- 6 november 2026: de deadline van D1 is niet gehaald.
+- 9 november 2026: onderzoek naar de huidige stand van Nextcloud op vier punten: metagegevens, retentie, verwijderen en identiteit. Daarbij PR 66355, twee bestaande marktapps voor metagegevens en dossierbeheer, en de opdracht zelf. Daarna een plan en een eerste versie van de D1-notitie.
+- 10 november 2026: [reactie op PR 66355](https://github.com/nextcloud/server/pull/66355#issuecomment-6763982428) geplaatst, en [issue 66498](https://github.com/nextcloud/server/issues/66498) (bestuurde verwijdering) en [issue 66499](https://github.com/nextcloud/server/issues/66499) (duurzame identiteit) aangemaakt. Ze zijn gebaseerd op de notitie van Erik Hoekstra en aangekondigd in het Talk-kanaal met Nextcloud, met de notitie als bijlage.
+
+## Gepland
+
+- D1 afronden en opleveren.
+- De reacties van Nextcloud op de reactie en de twee issues verwerken.
+- Het gedrag uit issue 66498 aantonen in een testomgeving met Object Lock.
+- D2, D3 en D5 voor 11 december 2026, D4 en D6 voor 18 december 2026.
+
+## Risico's
+
+- D1 is te laat. De volgende deliverables hebben minder ruimte.
+- Nextcloud ziet de bron per waarde niet in de metagegevens maar in de auditlog. Dat raakt keuze (c), metagegevens met bronvermelding.
+- Nextcloud vindt het `fileid` al stabiel. Een eigen identificatie per record moet daarom goed onderbouwd worden.
+- Nextcloud kan de februari-release verschuiven.
+
+## Afspraken met Nextcloud
+
+Geen schriftelijke afspraken. Wel twee openbare reacties van Nextcloud, beide op 10 november 2026 (zie [Stand richting Nextcloud](../stand-nextcloud.mdx)):
+
+- Op PR 66355: bron per waarde hoort in de auditlog; de opgeslagen metagegevens zijn de bron van waarheid; meerdere waarden per veld alleen bij een echte use case.
+- Op issue 66499: het `fileid` hoort stabiel te zijn, en is het dat niet dan is dat een fout. `filecache` is geen cache maar de hoofdtabel van het bestandssysteem.
+
+</div>

@@ -1,0 +1,53 @@
+---
+title: MDTO-afstemming
+sidebar_position: 4
+description: Hoe de vier velden van archiefmeta zich verhouden tot MDTO 1.0.1, en wat ontbreekt voor een geldige MDTO-export.
+---
+
+<div lang="nl">
+
+# MDTO-afstemming
+
+MDTO staat voor Metagegevens voor duurzaam toegankelijke overheidsinformatie, de standaard van het Nationaal Archief. Deze pagina vergelijkt de velden van archiefmeta met MDTO 1.0.1.
+
+Bronnen: het [MDTO-Metagegevensschema](https://github.com/NationaalArchief/MDTO-Metagegevensschema) en de [MDTO-XSD](https://github.com/NationaalArchief/MDTO-XSD) van het Nationaal Archief op GitHub.
+
+## Vier velden: het minimum van de opdrachtgever
+
+De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is het minimum dat de opdrachtgever vroeg, "afgestemd op MDTO". Het is niet het minimum van MDTO zelf. MDTO vraagt meer, zie [wat ontbreekt](#wat-ontbreekt-voor-een-geldige-mdto-export).
+
+## Verplichte elementen van een informatieobject in MDTO
+
+| Element | Aantal | Inhoud |
+|---|---|---|
+| `identificatie` | 1 of meer | `identificatieKenmerk` en `identificatieBron`, allebei verplicht |
+| `naam` | precies 1 | |
+| `waardering` | precies 1 | |
+| `archiefvormer` | 1 of meer | `verwijzingGegevens` |
+| `beperkingGebruik` | 1 of meer | |
+
+## Velden van de app naast MDTO
+
+| Sleutel in de app | MDTO-element | Aantal in MDTO | Hoe de app het nu vastlegt |
+|---|---|---|---|
+| `mdto-classificatie` | `classificatie`, met `begripGegevens`: `begripLabel`, `begripCode` (optioneel), `begripBegrippenlijst` | 0 of meer, verplicht indien bekend | Een of meer labels als tekst, zonder code en zonder begrippenlijst |
+| `mdto-bewaartermijn` | `bewaartermijn`, met `termijnGegevens`: `termijnTriggerStartLooptijd`, `termijnStartdatumLooptijd`, `termijnLooptijd` (een `xsd:duration`), `termijnEinddatum` | 0 of 1 | Eén datum: de vergrendeldatum uit S3 Object Lock of een opgegeven datum. Komt het dichtst bij `termijnEinddatum`. |
+| `mdto-zorgdrager` | Geen MDTO-element. Het dichtstbij komt `archiefvormer`: de organisatie die het object maakt of ontvangt. | (`archiefvormer`: 1 of meer) | Een of meer namen als tekst. Een benadering, geen gelijke. |
+| `mdto-identificatie` en `mdto-identificatie-systeem` | `identificatie`, met `identificatieKenmerk` en `identificatieBron` | 1 of meer | Eén kenmerk met optioneel het systeem dat het uitgaf. Zonder kenmerk uit de opslag toont de app het Nextcloud-`fileid`, met de melding dat dat nog niet duurzaam is. |
+
+## Zorgdrager is een Archiefwet-term
+
+"Zorgdrager" komt uit de Archiefwet: de organisatie die verantwoordelijk is voor de zorg voor de archiefbescheiden. MDTO kent het begrip niet als element. De app gebruikt het woord omdat de opdrachtgever het vroeg. Bij een export naar MDTO hoort de waarde bij `archiefvormer`, met de kanttekening dat de zorgdrager en de archiefvormer niet altijd dezelfde organisatie zijn.
+
+## Wat ontbreekt voor een geldige MDTO-export
+
+- `naam`: verplicht in MDTO, de app kent het niet. De bestandsnaam is een kandidaat.
+- `waardering`: verplicht in MDTO, de app kent het niet.
+- `beperkingGebruik`: verplicht in MDTO, de app kent het niet.
+- Een gestructureerde `bewaartermijn`: de app heeft één datum, MDTO kent een trigger, een startdatum, een looptijd en een einddatum.
+- Herhaalbare paren in `identificatie`: de app heeft één kenmerk met optioneel een bron, MDTO vraagt per identificatie zowel kenmerk als bron, en staat er meer toe.
+- `archiefvormer` met `verwijzingGegevens`: de app heeft alleen een naam als tekst.
+
+Een MDTO-export valt buiten deze iteratie. De D1-analyse wijst haar toe aan een archief-app.
+
+</div>
