@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V.
+# SPDX-License-Identifier: AGPL-3.0-or-later
+parameters:
+	level: 8
+	phpVersion: 80200
+	paths:
+		- lib
+	scanFiles:
+		- tests/stubs/oca_files_events.php
+		- tests/stubs/oc_hooks_emitter.php
+	scanDirectories:
+		- vendor/nextcloud/ocp
