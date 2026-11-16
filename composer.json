@@ -1,0 +1,55 @@
+{
+	"name": "conductionnl/archiefmeta",
+	"description": "Read-only archival (MDTO) metadata from the storage layer in the Nextcloud Files sidebar",
+	"type": "project",
+	"license": "AGPL-3.0-or-later",
+	"authors": [
+		{
+			"name": "Conduction B.V.",
+			"email": "info@conduction.nl",
+			"homepage": "https://conduction.nl"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"OCA\\ArchiefMeta\\": "lib/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCA\\ArchiefMeta\\Tests\\": "tests/"
+		}
+	},
+	"require": {
+		"php": "^8.2"
+	},
+	"require-dev": {
+		"aws/aws-sdk-php": "^3.376",
+		"doctrine/dbal": "^4.2",
+		"nextcloud/coding-standard": "^1.4",
+		"nextcloud/ocp": "dev-stable34",
+		"phpstan/phpstan": "^2.1",
+		"phpunit/phpunit": "^11.5",
+		"symfony/console": "^6.4"
+	},
+	"scripts": {
+		"lint": "find lib tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null",
+		"cs:check": "php-cs-fixer fix --dry-run --diff",
+		"cs:fix": "php-cs-fixer fix",
+		"phpstan": "phpstan analyse --no-progress --memory-limit=1G",
+		"test:unit": "phpunit -c tests/phpunit.xml --testsuite unit --no-coverage",
+		"check": [
+			"@lint",
+			"@cs:check",
+			"@phpstan",
+			"@test:unit"
+		]
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"sort-packages": true,
+		"platform": {
+			"php": "8.2"
+		}
+	}
+}

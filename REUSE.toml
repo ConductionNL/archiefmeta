@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V.
+# SPDX-License-Identifier: AGPL-3.0-or-later
+version = 1
+SPDX-PackageName = "archiefmeta"
+SPDX-PackageSupplier = "Conduction B.V. <info@conduction.nl>"
+SPDX-PackageDownloadLocation = "https://github.com/ConductionNL/archiefmeta"
+
+[[annotations]]
+path = ["l10n/**", "composer.json", "composer.lock", "package.json", "package-lock.json", "docs/screenshots/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Conduction B.V."
+SPDX-License-Identifier = "AGPL-3.0-or-later"
