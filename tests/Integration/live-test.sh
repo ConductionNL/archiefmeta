@@ -10,19 +10,20 @@
 #
 # Evidence (requests, status codes, bodies) is written to $OUT.
 # Defaults match the vng-ol test environment; override with environment variables.
+# Credentials have no default: set ADMIN_PASS, TEST_PASS, S3_KEY and S3_SECRET.
 set -uo pipefail
 
 NC_URL="${NC_URL:-http://127.0.0.1:8310}"
 NC_CONTAINER="${NC_CONTAINER:-vng-ol-nextcloud}"
 ADMIN_USER="${ADMIN_USER:-admin}"
-ADMIN_PASS="${ADMIN_PASS:-vngolAdmin!2026}"
+ADMIN_PASS="${ADMIN_PASS:?set ADMIN_PASS}"
 TEST_USER="${TEST_USER:-archieftest}"
-TEST_PASS="${TEST_PASS:-Archief-test-2026!}"
+TEST_PASS="${TEST_PASS:?set TEST_PASS}"
 MC_IMAGE="${MC_IMAGE:-bitnamilegacy/minio-client:2025.4.16}"
 MC_NETWORK="${MC_NETWORK:-vng-ol-net}"
 S3_ENDPOINT="${S3_ENDPOINT:-http://vng-ol-minio:9000}"
-S3_KEY="${S3_KEY:-vngoladmin}"
-S3_SECRET="${S3_SECRET:-vngolsecret123}"
+S3_KEY="${S3_KEY:?set S3_KEY}"
+S3_SECRET="${S3_SECRET:?set S3_SECRET}"
 PRIMARY_BUCKET="${PRIMARY_BUCKET:-vng-ol-primary}"
 EXTERNAL_BUCKET="${EXTERNAL_BUCKET:-vng-ol-external}"
 EXTERNAL_MOUNT="${EXTERNAL_MOUNT:-ext-external}"
