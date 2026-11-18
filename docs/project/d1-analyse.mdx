@@ -8,7 +8,7 @@ description: Toewijzing van de zes verzoeken voor archiefwaardige opslag in Next
 
 # D1 Analyse en toewijzing
 
-Stand: 16 november 2026. Deze notitie is deliverable D1 van iteratie 1 van archiefwaardige opslag in Nextcloud, gefinancierd door het programma Common Ground van VNG.
+Stand: 18 november 2026, aangevuld na de eerste beoordeling door de opdrachtgever. Deze notitie is deliverable D1 van iteratie 1 van archiefwaardige opslag in Nextcloud, gefinancierd door het programma Common Ground van VNG.
 
 ## Samenvatting
 
@@ -42,14 +42,44 @@ Nextcloud heeft bouwstenen voor alle drie verzoeken, maar geen ervan is af. Onde
 
 | Verzoek | Component | Benodigde interface | Status bij Nextcloud | Deze iteratie |
 | --- | --- | --- | --- | --- |
-| 1. Wijzigingsmeldingen uit de opslaglaag | Server, opslaglaag | Een kanaal waarlangs de opslag wijzigingen meldt, zodat de bestandsindex bijloopt zonder volledige scan | Core kent `INotifyStorage` al voor SMB; geen voorstel voor S3 | Analyse |
-| 2. Gedelegeerde versiegeschiedenis | Server (`files_versions`), opslaglaag | Versiebeheer van de opslag als versiebron | Versiebronnen (`IVersionBackend`) bestaan; geen voorstel voor S3 | Analyse |
+| 1. Wijzigingsmeldingen uit de opslaglaag | Server, opslaglaag | Een ontvanger voor meldingen die de opslag stuurt, die één bestand bijwerkt in plaats van te scannen. Ook voor een wijziging van alleen metagegevens. Zie [hieronder](#interfaces-voor-verzoek-1-en-2). | Core kent `INotifyStorage`, alleen voor SMB; geen voorstel voor S3 | Analyse |
+| 2. Gedelegeerde versiegeschiedenis | Server (`files_versions`), opslaglaag | Een versiebron die de versies van de opslag toont, met de versie-ID van de opslag als sleutel. Zie [hieronder](#interfaces-voor-verzoek-1-en-2). | Versiebronnen (`IVersionBackend`) bestaan; geen voorstel voor S3 | Analyse |
 | 3. Metagegevens uit de opslaglaag, alleen-lezen | Server (schema-API), integratie-app, opslaglaag | Getypeerde velden met wijzigrecht in core; weergave met bron in een app | [PR 66355](https://github.com/nextcloud/server/pull/66355) open (Nextcloud 36) | **D3**, als app |
 | 4. Bestuurde verwijdering | Opslaglaag, Server, objectenregister | Een getypeerde weigering met reden en een gebeurtenis voor logging; Object Lock-bewust verwijderen op S3 | [Issue 66498](https://github.com/nextcloud/server/issues/66498) open | **D2** |
 | 5. Duurzame objectidentiteit | Server, opslaglaag | Een identificatie per record, oplosbaar naar de actuele locatie | [Issue 66499](https://github.com/nextcloud/server/issues/66499) open; Nextcloud werkt aan hash-identiteit | **D5** |
 | 6. Abstractie van informatieobjecten | Archief-app, objectenregister, Governance-app | Taken, notities en berichten als informatieobject met dezelfde metagegevens en identiteit | Geen voorstel bekend | Analyse |
 
 Verzoek 5 is de basis onder de rest. Een melding, een versie, een logregel en een metagegeven wijzen allemaal een object aan.
+
+## Interfaces voor verzoek 1 en 2
+
+Beide verzoeken bouwen we niet in deze iteratie. Wel leggen we vast welke interface ze vragen, onderzocht op `master` van Nextcloud Server.
+
+### Verzoek 1: wijzigingsmeldingen
+
+**Wat er is.** Core kent `INotifyStorage`. Een opslag die het ondersteunt, levert via `notify()` een `INotifyHandler`. De beheerder start die met `occ files_external:notify` als een proces dat blijft luisteren. Alleen SMB ondersteunt het. De meldingen kennen vier soorten: toegevoegd, verwijderd, gewijzigd en hernoemd.
+
+**Wat ontbreekt.**
+
+- Een ontvanger voor meldingen die de opslag zelf verstuurt. S3-opslag stuurt meldingen over een bucket naar een webhook of een wachtrij, Nextcloud luistert niet naar een bucket.
+- Een soort melding voor een wijziging van alleen metagegevens: een verlengde bewaartermijn, een legal hold, een aangepaste tag. De inhoud verandert dan niet, de metagegevens wel.
+- Een manier om één object bij te werken: de bestandsindex en de opgeslagen metagegevens van dat ene bestand, zonder de hele opslag te scannen.
+
+**Benodigde interface.** Een endpoint of achtergrondtaak die een S3-melding ontvangt, het object vindt via de sleutel en de bestandsindex van dat ene bestand bijwerkt. Daarna volgt een gebeurtenis waarop apps hun metagegevens opnieuw lezen. Welke wijzigingen een S3-opslag meldt, verschilt per product. Dat nemen we mee in de tests voor D2.
+
+**D3 hangt hiervan af in productie.** De zijbalk toont een momentopname. Verlengt het register een bewaartermijn, dan toont Nextcloud de oude datum tot er een melding komt of een beheerder `occ archiefmeta:refresh` draait. In de proof of concept is dat genoeg, in productie niet.
+
+### Verzoek 2: gedelegeerde versiegeschiedenis
+
+**Wat er is.** `files_versions` laat een app een versiebron registreren met `IVersionBackend`. Die levert de versies van een bestand, maakt een versie, zet een versie terug en leest een versie. `IVersion::getRevisionId()` mag een tekst teruggeven, dus een S3-versie-ID past.
+
+**Wat ontbreekt.**
+
+- Een versiebron voor S3. Nextcloud bewaart versies zelf als kopie, ook als de bucket al versiebeheer heeft. Op een bucket met Object Lock staat elke versie dan twee keer vast.
+- `IVersionBackend::getRevision(Node)` (sinds Nextcloud 32) geeft een getal terug. Een S3-versie-ID is een tekst.
+- Terugzetten maakt op S3 een nieuwe versie van een oude. Het overschrijft niets. Dat hoort de gebruiker zo te zien.
+
+**Benodigde interface.** Een `IVersionBackend` voor S3 die versies opvraagt bij de opslag, een versie leest op versie-ID, en terugzet door de oude versie te kopiëren. Daarvoor moet `getRevision()` een tekst accepteren. Voor S3 schrijft Nextcloud dan geen eigen kopie meer.
 
 ## Besluitvoorstel: vier architectuurkeuzes
 
@@ -60,7 +90,25 @@ Verzoek 5 is de basis onder de rest. Een melding, een versie, een logregel en ee
 | (c) Metagegevens dragen bronvermelding | Overnemen | Elke waarde draagt een bron en een tijdstip. De Files-zijbalk toont ze naast het gegeven. |
 | (d) Archiefwet-functionaliteit werkt zonder SLA-abonnement | Overnemen | Alles wat wij bouwen is AGPL-3.0, zonder licentiesleutel of activatie. |
 
-**Keuze (a) staat onder druk.** Nextcloud gaf aan dat verwijderen loopt via Nextcloud Governance, in de permissielaag, en dat de opslag geen bedrijfsregels hoeft te kennen. Dat is het risico dat de opdracht noemt: verzoek 4 wordt app-retentie. Het besluit ligt bij opdrachtgever en Product Owner. Daarbij weegt mee dat de Governance-app niet openbaar is, en dat nog onbekend is of ze werkt zonder abonnement (keuze d).
+**Keuze (a) en Nextcloud Governance.** Nextcloud gaf aan dat verwijderen loopt via Nextcloud Governance, in de permissielaag, en dat de opslag geen bedrijfsregels hoeft te kennen. Opdrachtgever en Conduction stellen voor keuze (a) te houden, met Governance ernaast:
+
+- Governance is het eerste filter: labels, legal hold, één ervaring voor de gebruiker. Dat is een logische aanvulling.
+- Governance vervangt de weigering door de opslag niet. Een permissielaag is te omzeilen, en zolang onbekend is of Governance zonder abonnement werkt, raakt het aan keuze (d).
+- De opslag kent geen bedrijfsregels. Het register bepaalt de datum, de opslag handhaaft die alleen.
+- Van core vragen we weinig: een weigering van de opslag respecteren, en geen succes melden als er niets is verwijderd.
+
+VNG bevestigt dit bij het stuurmoment na D1. Daarna leggen we het samen met Nextcloud vast, voordat D2 start.
+
+## Afwijking van verzoek 3 en de keuzes (b) en (c)
+
+Voor de metagegevens volgen we het voorstel van Nextcloud bij PR 66355. Dat wijkt op drie punten af van verzoek 3 en de keuzes (b) en (c). We vinden die afwijking verdedigbaar.
+
+| Oorspronkelijk | Nu | Gevolg |
+| --- | --- | --- |
+| Verzoek 3: de opslaglaag levert de waarden, Nextcloud toont ze | Een app leest de waarden uit de opslag en slaat ze op via de metadata-API. Die opslag is voor Nextcloud de bron. | Wat Nextcloud toont is een kopie. Zonder wijzigingsmelding (verzoek 1) loopt die achter. |
+| Keuze (b): het register is de enige bron van de bewaartermijn | Het register bepaalt de datum, de opslag handhaaft haar, Nextcloud bewaart een kopie | Het register blijft leidend. Bij verschil wint de opslag, want die weigert of staat toe. |
+| Keuze (c): metagegevens dragen bronvermelding | Nextcloud wil de bron niet in de metagegevens, wel in de auditlog. archiefmeta bewaart de bron daarom zelf, binnen de waarde. | Andere apps lezen de bron niet op een vaste plek. Werkt voor deze iteratie, niet als standaard. |
+
 
 ## App-retentie versus weigering door de opslaglaag
 
@@ -94,19 +142,26 @@ Bestaande apps voor metagegevens en dossierbeheer op Nextcloud beschrijven archi
 ## Uitwerking per deliverable
 
 1. **D3, metagegevens.** De app [archiefmeta](https://github.com/ConductionNL/archiefmeta) leest classificatie, bewaartermijn, zorgdrager en identificatie uit de opslag en slaat ze op via de metadata-API van Nextcloud, met `EDIT_FORBIDDEN`. Zodra de schema-API uit PR 66355 er is, stappen we over.
-2. **D2, verwijdering.** Eerst de S3-fout: Nextcloud moet een weigering van de opslag herkennen in plaats van succes te melden. Wachten op de reactie van Nextcloud op issue 66498 en op het besluit over keuze (a). Scenario B, verwijderen na een vernietigingsbesluit, vraagt governance-modus met een apart opslagaccount.
+2. **D2, verwijdering.** Eerst de S3-fout: Nextcloud moet een weigering van de opslag herkennen in plaats van succes te melden. Het ontwerp staat in [D2 Ontwerp](./d2-ontwerp.mdx). Start na de bevestiging van keuze (a). Scenario B, verwijderen na een vernietigingsbesluit, vraagt governance-modus met een apart opslagaccount.
 3. **D5, identiteit.** Afstemmen op de hash-identiteit van Nextcloud. Ons verzoek: een identificatie per record die gelijk blijft over versies heen, naast een hash per versie.
 
 **Opstelling.** MinIO met Object Lock en Nextcloud in een geïsoleerde testomgeving, zonder productiedata en zonder persoonsgegevens.
 
 ## Open punten
 
-- [ ] Besluit van opdrachtgever en Product Owner over keuze (a).
+- [ ] Bevestiging door VNG van keuze (a), zoals hierboven voorgesteld, bij het stuurmoment na D1.
 - [ ] Is Nextcloud Governance, of het deel voor retentie en legal hold, beschikbaar zonder abonnement?
 - [ ] Geeft de hash-identiteit van Nextcloud ook een identificatie per record over versies heen?
-- [ ] Welke twee core-wijzigingen heeft Nextcloud in Berlijn toegezegd?
+- [ ] Welke twee core-wijzigingen heeft Nextcloud in Berlijn toegezegd? Gevraagd aan Nextcloud om dat schriftelijk te bevestigen.
 - [ ] Afstemming met de gemeente Ede.
 
-**Planning.** D2, D3 en D5 houden 11 december aan, D4 en D6 18 december. Het grootste risico blijft dat Nextcloud de februari-release verschuift. Daarom accepteren we D4 op indiening en afstemming, zoals de opdracht voorschrijft.
+**Planning.**
+
+- D1: beoordeling na deze aanvulling en de twee open punten over Berlijn en Ede. Na D1 volgt het stuurmoment met VNG, waar we de verdeling over D2 tot en met D6 bevestigen.
+- D3: afronding direct na de demonstratie, die bij het criterium hoort.
+- D2 en D5: 11 december. D4 en D6: 18 december.
+- D4 vraagt een verslag van de afspraken met Nextcloud, een schriftelijke planning richting februari, een afspraak over beheer en SLA, en de core-wijzigingen voor D2 en D5.
+
+Het grootste risico blijft dat Nextcloud de februari-release verschuift. Daarom accepteren we D4 op indiening en afstemming, zoals de opdracht voorschrijft.
 
 </div>
