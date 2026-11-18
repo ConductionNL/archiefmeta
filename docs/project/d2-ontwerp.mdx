@@ -1,0 +1,55 @@
+---
+sidebar_position: 2
+title: D2 Ontwerp
+description: Ontwerp voor een verwijdering die de opslaglaag weigert, op basis van de tests met S3 Object Lock.
+---
+
+<div lang="nl">
+
+# D2 Ontwerp: de opslag weigert, Nextcloud meldt het
+
+Stand: 18 november 2026. Dit ontwerp is de start van deliverable D2. Het bouwt op [de testresultaten met S3 Object Lock](../evidence/s3-object-lock-deletes.md) en op keuze (a) uit [D1](./d1-analyse.mdx).
+
+## Wat de tests laten zien
+
+Nextcloud verwijdert op S3 zonder versie-ID. Op een bucket met versiebeheer maakt S3 dan een delete marker. Dat mag altijd, ook bij Object Lock. De opslag weigert dus nooit, en Nextcloud meldt een geslaagde verwijdering terwijl de bytes blijven staan.
+
+Weigert de opslag wel, bijvoorbeeld door een bucketpolicy, dan ziet Nextcloud dat bij een map niet. Het vraagt de verwijdering in één keer en leest de fouten per object niet uit. De map verdwijnt, en komt na een herscan terug met nieuwe `fileid`'s.
+
+## Waarom dit meer is dan gebruiksgemak
+
+Een valse 204 is geen kwestie van een onduidelijke melding. Wat de gebruiker als verwijderd ziet, bestaat nog.
+
+- **Woo.** Een document dat nog bestaat valt onder een Woo-verzoek, ook als niemand het in Nextcloud terugvindt. De organisatie weet niet meer wat ze heeft.
+- **AVG.** Een verzoek om verwijdering wordt als uitgevoerd gemeld, terwijl de gegevens er nog staan.
+- **Archiefwet.** Vernietiging hoort aantoonbaar en volgens een besluit te gebeuren. Een delete marker is geen vernietiging, en er is geen spoor van.
+
+## Wat core moet doen
+
+We vragen weinig van core, en geen bedrijfsregels in de opslag. Het register bepaalt de datum, de opslag handhaaft haar.
+
+1. **Een weigering herkennen.** Twee routes, die elkaar aanvullen:
+   - *Vooraf vragen.* Op een bucket met Object Lock vraagt Nextcloud de retentie en de legal hold van het object op (`GetObjectRetention`, `GetObjectLegalHold`). Staat er een slot op, dan weigert Nextcloud zelf, met de datum als reden.
+   - *Per versie verwijderen.* Nextcloud verwijdert met de versie-ID. Dan weigert de opslag echt bij een slot, en krijgt Nextcloud een fout terug in plaats van een delete marker.
+2. **Fouten per object lezen.** Bij het verwijderen van een map leest Nextcloud de fouten per object. Is één object geweigerd, dan blijft de map staan met dat object, en meldt Nextcloud welk object en waarom.
+3. **De weigering netjes melden.** De gebruiker krijgt een melding met reden: "Dit document valt onder een bewaartermijn tot 1 maart 2031 en kan niet worden verwijderd." Nextcloud logt de weigering.
+4. **Geen kopie buiten de cyclus.** Bij een externe vergrendelde bucket kopieert Nextcloud het bestand eerst naar de prullenbak op de primaire opslag. Die kopie valt buiten de bewaartermijn en buiten de vernietiging. Op een opslag met Object Lock hoort de prullenbak die kopie niet te maken.
+
+Route 1a geeft een goede melding en kost een extra verzoek per object. Route 1b is het echte slot. We stellen voor beide te doen: vooraf vragen voor de melding, per versie verwijderen als vangnet.
+
+## Vernietigen na een besluit
+
+Na een vernietigingsbesluit mag een object wel weg. Dat vraagt governance-modus en een apart opslagaccount met het recht om de retentie te omzeilen. Nextcloud gebruikt dat account niet. In compliance-modus kan niemand een object vóór de vergrendeldatum verwijderen, ook de beheerder van de opslag niet.
+
+## Wat we testen
+
+- Primaire objectopslag en externe S3-opslag.
+- Governance-modus en compliance-modus.
+- MinIO en Ceph RGW. Ceph RGW is de referentie, omdat de gebruikte MinIO-build niet meer te downloaden is.
+- Per scenario: wat Nextcloud antwoordt, wat de bucket daarna bevat, en wat er gelogd is.
+
+## Volgende stap
+
+Na de bevestiging van keuze (a) stemmen we dit ontwerp af met Nextcloud. Daarna bouwen we de wijziging in core als pull request.
+
+</div>
