@@ -80,7 +80,7 @@ Nextcloud 36 adds `OCP\FilesMetadata\Schema\IMetadataSchemaProvider`. An app dec
 
 The switch is one new class, `SchemaMetadataStore implements IMetadataStore`:
 
-1. `registerFields()` becomes a schema provider that declares the four fields, with `canEdit` returning false for every user.
+1. `registerFields()` becomes a schema provider that declares the six fields, with `canEdit` returning false for every user.
 2. `save()` and `load()` use whatever storage the schema API settles on.
 3. `Application::register()` points the `IMetadataStore` alias at the new class when the schema API exists, and at `FilesMetadataStore` on older versions.
 

@@ -44,6 +44,15 @@ class FieldValueTest extends TestCase {
 		$this->assertTrue(Field::Classificatie->isMultiple());
 		$this->assertFalse(Field::Bewaartermijn->isMultiple());
 		$this->assertFalse(Field::Identificatie->isMultiple());
+		$this->assertFalse(Field::Waardering->isMultiple());
+		$this->assertFalse(Field::Informatiecategorie->isMultiple());
+	}
+
+	public function testWaarderingAndInformatiecategorieAreBegrippen(): void {
+		$this->assertTrue(Field::Waardering->isBegrip());
+		$this->assertTrue(Field::Informatiecategorie->isBegrip());
+		$this->assertFalse(Field::Classificatie->isBegrip());
+		$this->assertFalse(Field::Bewaartermijn->isBegrip());
 	}
 
 	public function testEverySourceHasALabel(): void {

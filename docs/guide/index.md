@@ -8,12 +8,14 @@ description: Install archiefmeta, set archival metadata on S3, set up Object Loc
 
 ## For users
 
-Open a file in Files and choose the **Archive** tab in the sidebar (Dutch: **Archief**). It shows four fields:
+Open a file in Files and choose the **Archive** tab in the sidebar (Dutch: **Archief**). It shows six fields:
 
 | Field | What it means |
 |---|---|
 | Classification (`classificatie`) | The classification of the record, for example `Openbaar`. |
 | Retention period (`bewaartermijn`) | Until when the record must be kept. From S3 Object Lock when the object is locked, with the lock mode and legal hold. |
+| Appraisal (`waardering`) | Whether the record is kept for good or destroyed after the retention period, according to the selectielijst: Blijvend te bewaren (B), Tijdelijk te bewaren (V) or Nader te bepalen (N), with the list it comes from. |
+| Selection list category (`informatiecategorie`) | The category of the selectielijst the retention period is based on, with its code and the selectielijst, for example "Primair beleid (2.1.1)" from the "Selectielijst ministerie van Infrastructuur en Milieu 2017". |
 | Custodian (`zorgdrager`) | The organisation or organisations responsible for the record. |
 | Identifier (`identificatie`) | The identifier of the record and, when known, the system that issued it. |
 
@@ -45,7 +47,7 @@ sudo -u www-data php occ app:enable archiefmeta
 
 For a Docker container there is a helper: `scripts/install-into-container.sh <container>`.
 
-Enabling the app registers the four metadata keys as not editable. Files written before you enabled the app have no values yet. Read them with:
+Enabling the app registers the six metadata keys as not editable. Files written before you enabled the app have no values yet. Read them with:
 
 ```bash
 occ archiefmeta:refresh --recursive alice/files
@@ -60,9 +62,9 @@ The app asks its sources in a fixed order. Per field, the first source with a va
 | Order | Source | Label in the tab | Fields |
 |---|---|---|---|
 | 1 | S3 Object Lock | Storage layer (S3 Object Lock) | bewaartermijn |
-| 1 | S3 object metadata | Storage layer (S3 object metadata) | all four |
-| 1 | S3 object tags | Storage layer (S3 object tags) | all four |
-| 2 | Administrator, through `occ archiefmeta:set` | Administrator | all four |
+| 1 | S3 object metadata | Storage layer (S3 object metadata) | all six |
+| 1 | S3 object tags | Storage layer (S3 object tags) | all six |
+| 2 | Administrator, through `occ archiefmeta:set` | Administrator | all six |
 | 3 | Nextcloud file ID | Nextcloud file ID (not durable) | identificatie |
 
 #### S3 keys
@@ -78,8 +80,16 @@ For the other fields the app reads user metadata first, then object tags with th
 | zorgdrager | `x-amz-meta-mdto-zorgdrager` | `mdto-zorgdrager` | `Gemeente Zuiddrecht` |
 | identificatie | `x-amz-meta-mdto-identificatie` | `mdto-identificatie` | `ZD-2026-0001` |
 | issuer of the identifier | `x-amz-meta-mdto-identificatie-systeem` | `mdto-identificatie-systeem` | `Zaaksysteem` |
+| waardering (begripLabel) | `x-amz-meta-mdto-waardering` | `mdto-waardering` | `V` or `Tijdelijk te bewaren` |
+| waardering begripCode | `x-amz-meta-mdto-waardering-begripcode` | `mdto-waardering-begripcode` | `V` |
+| waardering begripBegrippenlijst | `x-amz-meta-mdto-waardering-begripbegrippenlijst` | `mdto-waardering-begripbegrippenlijst` | `Begrippenlijst Waarderingen MDTO` |
+| informatiecategorie (begripLabel) | `x-amz-meta-mdto-informatiecategorie` | `mdto-informatiecategorie` | `Primair beleid` |
+| informatiecategorie begripCode | `x-amz-meta-mdto-informatiecategorie-begripcode` | `mdto-informatiecategorie-begripcode` | `2.1.1` |
+| informatiecategorie begripBegrippenlijst | `x-amz-meta-mdto-informatiecategorie-begripbegrippenlijst` | `mdto-informatiecategorie-begripbegrippenlijst` | `Selectielijst ministerie van Infrastructuur en Milieu 2017` |
 
 More than one zorgdrager or classificatie? Separate them with `;` in metadata. Tag values cannot hold `;`, so use numbered keys there: `mdto-zorgdrager-1`, `mdto-zorgdrager-2`. Numbered keys work in metadata too.
+
+The begripCode and begripBegrippenlijst of a waardering or informatiecategorie are read from the same place as its label: metadata with metadata, tags with tags. A waardering from the MDTO list can be given as just its code (`B`, `V` or `N`) or its label (`Blijvend te bewaren`, `Tijdelijk te bewaren`, `Nader te bepalen`); the app fills in the rest. A waardering from another list, such as the terms of a selectielijst, is shown as given, with its own code and list.
 
 Header values must be ASCII. Percent-encode other characters as UTF-8 (`Gemeente%20%C3%96`); the app decodes them.
 
@@ -106,8 +116,13 @@ occ archiefmeta:refresh <path|fileid> [--recursive]   read the sources again
 occ archiefmeta:show <path|fileid> [--json]           print the stored values
 occ archiefmeta:set <path|fileid> [--classificatie=..]... [--zorgdrager=..]...
                     [--bewaartermijn=2036-01-01] [--identificatie=..]
+                    [--waardering=B|V|N] [--informatiecategorie=..]
+                    [--informatiecategorie-begripcode=..]
+                    [--informatiecategorie-begripbegrippenlijst=..]
                     [--clear=<field>]... [--clear-all]
 ```
+
+For example: `occ archiefmeta:set 123 --waardering=V --informatiecategorie="Primair beleid" --informatiecategorie-begripcode=2.1.1 --informatiecategorie-begripbegrippenlijst="Selectielijst ministerie van Infrastructuur en Milieu 2017"`. A waardering outside the MDTO list needs `--waardering-begripbegrippenlijst` (and optionally `--waardering-begripcode`).
 
 A path is relative to the data root, such as `alice/files/Report.pdf`.
 

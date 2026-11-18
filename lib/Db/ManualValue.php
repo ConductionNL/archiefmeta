@@ -21,6 +21,8 @@ use OCP\DB\Types;
  * @method void setField(string $field)
  * @method string getValuesJson()
  * @method void setValuesJson(string $valuesJson)
+ * @method string|null getDetailsJson()
+ * @method void setDetailsJson(?string $detailsJson)
  * @method string getSetBy()
  * @method void setSetBy(string $setBy)
  * @method int getSetAt()
@@ -30,6 +32,7 @@ class ManualValue extends Entity {
 	protected int $fileId = 0;
 	protected string $field = '';
 	protected string $valuesJson = '[]';
+	protected ?string $detailsJson = null;
 	protected string $setBy = '';
 	protected int $setAt = 0;
 
@@ -37,6 +40,7 @@ class ManualValue extends Entity {
 		$this->addType('fileId', Types::BIGINT);
 		$this->addType('field', Types::STRING);
 		$this->addType('valuesJson', Types::TEXT);
+		$this->addType('detailsJson', Types::TEXT);
 		$this->addType('setBy', Types::STRING);
 		$this->addType('setAt', Types::BIGINT);
 	}
@@ -57,5 +61,26 @@ class ManualValue extends Entity {
 	 */
 	public function setValues(array $values): void {
 		$this->setValuesJson(json_encode($values, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	public function getDetails(): array {
+		$decoded = json_decode($this->getDetailsJson() ?? '', true);
+		$details = [];
+		foreach (is_array($decoded) ? $decoded : [] as $key => $value) {
+			if (is_scalar($value) && (string)$value !== '') {
+				$details[(string)$key] = (string)$value;
+			}
+		}
+		return $details;
+	}
+
+	/**
+	 * @param array<string, string> $details
+	 */
+	public function setDetails(array $details): void {
+		$this->setDetailsJson($details === [] ? null : json_encode($details, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
 	}
 }

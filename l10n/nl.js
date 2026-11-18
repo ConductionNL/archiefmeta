@@ -31,6 +31,9 @@ OC.L10N.register(
         "Nextcloud file ID (not durable)": "Nextcloud-bestands-ID (niet duurzaam)",
         "Storage layer (S3 Object Lock)": "Opslaglaag (S3 Object Lock)",
         "Storage layer (S3 object metadata)": "Opslaglaag (S3-objectmetadata)",
-        "Storage layer (S3 object tags)": "Opslaglaag (S3-objecttags)"
+        "Storage layer (S3 object tags)": "Opslaglaag (S3-objecttags)",
+        "Appraisal": "Waardering",
+        "Selection list category": "Informatiecategorie",
+        "List: {list}": "Lijst: {list}"
     },
 "nplurals=2; plural=(n != 1);");

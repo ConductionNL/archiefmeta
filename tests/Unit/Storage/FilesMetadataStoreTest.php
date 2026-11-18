@@ -25,7 +25,7 @@ class FilesMetadataStoreTest extends TestCase {
 	public function testRegistersEveryFieldAsForbiddenToEdit(): void {
 		$manager = $this->createMock(IFilesMetadataManager::class);
 		$registered = [];
-		$manager->expects($this->exactly(4))->method('initMetadata')
+		$manager->expects($this->exactly(6))->method('initMetadata')
 			->willReturnCallback(function (string $key, string $type, bool $indexed, int $edit) use (&$registered): void {
 				$registered[$key] = [$type, $indexed, $edit];
 			});
@@ -35,6 +35,8 @@ class FilesMetadataStoreTest extends TestCase {
 		$this->assertSame([
 			'archiefmeta-classificatie' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
 			'archiefmeta-bewaartermijn' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
+			'archiefmeta-waardering' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
+			'archiefmeta-informatiecategorie' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
 			'archiefmeta-zorgdrager' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
 			'archiefmeta-identificatie' => [IMetadataValueWrapper::TYPE_ARRAY, false, IMetadataValueWrapper::EDIT_FORBIDDEN],
 		], $registered);

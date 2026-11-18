@@ -19,17 +19,17 @@ About ten minutes. You need a Nextcloud with S3 primary storage and Object Lock,
 3. Point at **Retention period**. The date comes from S3 Object Lock. The source line says so, and the read time is the upload time.
 4. Point at **Identifier**. It shows the Nextcloud file ID and says it is not durable yet.
 
-## 2. The storage layer adds classification and custodians
+## 2. The storage layer adds classification, appraisal and custodians
 
 ```bash
 occ archiefmeta:show <owner>/files/besluit.txt --json      # note the fileid
 mc tag set s3/<bucket>/urn:oid:<fileid> \
-  "mdto-classificatie=Openbaar&mdto-zorgdrager-1=Gemeente Zuiddrecht&mdto-zorgdrager-2=Regionaal Archief&mdto-identificatie=ZD-2026-0001"
+  "mdto-classificatie=Openbaar&mdto-waardering=V&mdto-informatiecategorie=Primair beleid&mdto-informatiecategorie-begripcode=2.1.1&mdto-informatiecategorie-begripbegrippenlijst=Selectielijst ministerie van Infrastructuur en Milieu 2017&mdto-zorgdrager-1=Gemeente Zuiddrecht&mdto-zorgdrager-2=Regionaal Archief&mdto-identificatie=ZD-2026-0001"
 mc legalhold set s3/<bucket>/urn:oid:<fileid>
 occ archiefmeta:refresh <fileid>
 ```
 
-Reload the tab. Classification, two custodians, the identifier and "Legal hold: on" appear. Each line names the storage layer as source.
+Reload the tab. Classification, the appraisal "Tijdelijk te bewaren (V)" with its selection list category "Primair beleid (2.1.1)", two custodians, the identifier and "Legal hold: on" appear. Each line names the storage layer as source.
 
 ## 3. Nobody can change it
 
@@ -47,6 +47,6 @@ Nextcloud refuses: "you do not have enough rights to update 'archiefmeta-classif
 
 ## 4. Language
 
-Switch the colleague to Dutch. The tab is called **Archief** and the labels follow MDTO: Classificatie, Bewaartermijn, Zorgdrager, Identificatie.
+Switch the colleague to Dutch. The tab is called **Archief** and the labels follow MDTO: Classificatie, Bewaartermijn, Waardering, Informatiecategorie, Zorgdrager, Identificatie.
 
 Clean up: lift the legal hold with `mc legalhold clear`. The default retention keeps the object until it ends.

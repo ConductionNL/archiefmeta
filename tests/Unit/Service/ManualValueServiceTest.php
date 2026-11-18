@@ -12,6 +12,7 @@ namespace OCA\ArchiefMeta\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\ArchiefMeta\Db\ManualValue;
 use OCA\ArchiefMeta\Db\ManualValueMapper;
+use OCA\ArchiefMeta\Model\Begrip;
 use OCA\ArchiefMeta\Model\Field;
 use OCA\ArchiefMeta\Service\ManualValueService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -37,10 +38,38 @@ class ManualValueServiceTest extends TestCase {
 			$this->assertSame(['Gemeente A', 'Gemeente B'], $entity->getValues());
 			$this->assertSame('occ', $entity->getSetBy());
 			$this->assertSame(1763287200, $entity->getSetAt());
+			$this->assertSame([], $entity->getDetails());
 			return $entity;
 		});
 
-		$this->service->set(7, Field::Zorgdrager, [' Gemeente A ', '', 'Gemeente B'], 'occ');
+		$this->service->set(7, Field::Zorgdrager, [' Gemeente A ', '', 'Gemeente B'], 'occ', [Begrip::CODE => 'only kept for begrip fields']);
+	}
+
+	/**
+	 * @return array<string, array{Field, string, array<string, string>, string, array<string, string>}>
+	 */
+	public static function begrippen(): array {
+		$mdto = [Begrip::CODE => 'V', Begrip::BEGRIPPENLIJST => Begrip::WAARDERINGEN];
+		return [
+			'waardering by code' => [Field::Waardering, 'v', [], 'Tijdelijk te bewaren', $mdto],
+			'waardering by label' => [Field::Waardering, 'Tijdelijk te bewaren', [Begrip::CODE => ' '], 'Tijdelijk te bewaren', $mdto],
+			'waardering from another list' => [Field::Waardering, 'Vernietigen', [Begrip::BEGRIPPENLIJST => 'Selectielijst gemeenten 2020'], 'Vernietigen', [Begrip::BEGRIPPENLIJST => 'Selectielijst gemeenten 2020']],
+			'informatiecategorie' => [Field::Informatiecategorie, 'Primair beleid', [Begrip::CODE => ' 2.1.1 ', Begrip::BEGRIPPENLIJST => 'Selectielijst ministerie van Infrastructuur en Milieu 2017', 'other' => 'dropped'], 'Primair beleid', [Begrip::CODE => '2.1.1', Begrip::BEGRIPPENLIJST => 'Selectielijst ministerie van Infrastructuur en Milieu 2017']],
+		];
+	}
+
+	/**
+	 * @param array<string, string> $details
+	 * @param array<string, string> $storedDetails
+	 */
+	#[DataProvider('begrippen')]
+	public function testBegripKeepsCodeAndList(Field $field, string $value, array $details, string $stored, array $storedDetails): void {
+		$this->mapper->expects($this->once())->method('insert')->willReturnCallback(function (ManualValue $entity) use ($stored, $storedDetails): ManualValue {
+			$this->assertSame([$stored], $entity->getValues());
+			$this->assertSame($storedDetails, $entity->getDetails());
+			return $entity;
+		});
+		$this->service->set(7, $field, [$value], 'occ', $details);
 	}
 
 	/**
@@ -71,6 +100,7 @@ class ManualValueServiceTest extends TestCase {
 			'two identifiers' => [Field::Identificatie, ['a', 'b']],
 			'not a date' => [Field::Bewaartermijn, ['ten years']],
 			'impossible date' => [Field::Bewaartermijn, ['2036-02-30']],
+			'waardering not in the MDTO list' => [Field::Waardering, ['Bewaren']],
 		];
 	}
 
