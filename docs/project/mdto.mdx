@@ -1,7 +1,7 @@
 ---
 title: MDTO-afstemming
 sidebar_position: 4
-description: Hoe de vier velden van archiefmeta zich verhouden tot MDTO 1.0.1, en wat ontbreekt voor een geldige MDTO-export.
+description: Hoe de velden van archiefmeta zich verhouden tot MDTO 1.0.1, en wat ontbreekt voor een geldige MDTO-export.
 ---
 
 <div lang="nl">
@@ -12,9 +12,9 @@ MDTO staat voor Metagegevens voor duurzaam toegankelijke overheidsinformatie, de
 
 Bronnen: het [MDTO-Metagegevensschema](https://github.com/NationaalArchief/MDTO-Metagegevensschema) en de [MDTO-XSD](https://github.com/NationaalArchief/MDTO-XSD) van het Nationaal Archief op GitHub.
 
-## Vier velden: het minimum van de opdrachtgever
+## Zes velden: het minimum van de opdrachtgever en de waardering
 
-De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is het minimum dat de opdrachtgever vroeg, "afgestemd op MDTO". Het is niet het minimum van MDTO zelf. MDTO vraagt meer, zie [wat ontbreekt](#wat-ontbreekt-voor-een-geldige-mdto-export).
+De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is het minimum dat de opdrachtgever vroeg, "afgestemd op MDTO". Op verzoek van de informatiebeheerders toont de app daarnaast de waardering en de informatiecategorie uit de selectielijst, naast de bewaartermijn. Dat is nog niet het minimum van MDTO zelf. MDTO vraagt meer, zie [wat ontbreekt](#wat-ontbreekt-voor-een-geldige-mdto-export).
 
 ## Verplichte elementen van een informatieobject in MDTO
 
@@ -32,6 +32,8 @@ De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is h
 |---|---|---|---|
 | `mdto-classificatie` | `classificatie`, met `begripGegevens`: `begripLabel`, `begripCode` (optioneel), `begripBegrippenlijst` | 0 of meer, verplicht indien bekend | Een of meer labels als tekst, zonder code en zonder begrippenlijst |
 | `mdto-bewaartermijn` | `bewaartermijn`, met `termijnGegevens`: `termijnTriggerStartLooptijd`, `termijnStartdatumLooptijd`, `termijnLooptijd` (een `xsd:duration`), `termijnEinddatum` | 0 of 1 | Eén datum: de vergrendeldatum uit S3 Object Lock of een opgegeven datum. Komt het dichtst bij `termijnEinddatum`. |
+| `mdto-waardering`, met `-begripcode` en `-begripbegrippenlijst` | `waardering`, met `begripGegevens`: `begripLabel`, `begripCode` (optioneel), `begripBegrippenlijst` | precies 1 | Het label als waarde, code en begrippenlijst als details. De begrippenlijst Waarderingen van MDTO is gesloten: B (Blijvend te bewaren), V (Tijdelijk te bewaren), N (Nader te bepalen). Geeft de opslag alleen de code of het label, dan vult de app de rest aan. Een waardering uit een andere lijst toont de app zoals ze is opgegeven. |
+| `mdto-informatiecategorie`, met `-begripcode` en `-begripbegrippenlijst` | `informatiecategorie`, met `begripGegevens`: `begripLabel`, `begripCode` (optioneel), `begripBegrippenlijst`. De categorie uit een vastgestelde selectielijst of hotspotlijst waarop de bewaartermijn is gebaseerd. | 0 of 1 | Het label als waarde, code en selectielijst als details. Een element van het informatieobject, niet van de `bewaartermijn`. |
 | `mdto-zorgdrager` | Geen MDTO-element. Het dichtstbij komt `archiefvormer`: de organisatie die het object maakt of ontvangt. | (`archiefvormer`: 1 of meer) | Een of meer namen als tekst. Een benadering, geen gelijke. |
 | `mdto-identificatie` en `mdto-identificatie-systeem` | `identificatie`, met `identificatieKenmerk` en `identificatieBron` | 1 of meer | Eén kenmerk met optioneel het systeem dat het uitgaf. Zonder kenmerk uit de opslag toont de app het Nextcloud-`fileid`, met de melding dat dat nog niet duurzaam is. |
 
@@ -42,7 +44,8 @@ De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is h
 ## Wat ontbreekt voor een geldige MDTO-export
 
 - `naam`: verplicht in MDTO, de app kent het niet. De bestandsnaam is een kandidaat.
-- `waardering`: verplicht in MDTO, de app kent het niet.
+- `waardering`: verplicht in MDTO. De app toont het als het in de opslag of bij de beheerder bekend is, maar dwingt het niet af. Zonder waarde blijft het veld leeg.
+- `begripBegrippenlijst`: verplicht in elk `begripGegevens` van MDTO. De app vult het aan voor een waardering uit de MDTO-lijst, maar niet voor een informatiecategorie zonder opgegeven selectielijst.
 - `beperkingGebruik`: verplicht in MDTO, de app kent het niet.
 - Een gestructureerde `bewaartermijn`: de app heeft één datum, MDTO kent een trigger, een startdatum, een looptijd en een einddatum.
 - Herhaalbare paren in `identificatie`: de app heeft één kenmerk met optioneel een bron, MDTO vraagt per identificatie zowel kenmerk als bron, en staat er meer toe.

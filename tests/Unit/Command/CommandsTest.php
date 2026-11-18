@@ -90,8 +90,8 @@ class CommandsTest extends TestCase {
 		$file = $this->file(42);
 		$manual = $this->createMock(ManualValueService::class);
 		$calls = [];
-		$manual->method('set')->willReturnCallback(function (int $fileId, Field $field, array $values, string $setBy) use (&$calls): void {
-			$calls[] = [$fileId, $field->value, $values, $setBy];
+		$manual->method('set')->willReturnCallback(function (int $fileId, Field $field, array $values, string $setBy, array $details) use (&$calls): void {
+			$calls[] = [$fileId, $field->value, $values, $setBy, $details];
 		});
 		$manual->expects($this->once())->method('clear')->with(42, Field::Identificatie);
 		$refresher = $this->createMock(MetadataRefresher::class);
@@ -104,13 +104,19 @@ class CommandsTest extends TestCase {
 			'target' => '42',
 			'--zorgdrager' => ['Gemeente A', 'Gemeente B'],
 			'--bewaartermijn' => '2036-01-01',
+			'--waardering' => 'V',
+			'--informatiecategorie' => 'Primair beleid',
+			'--informatiecategorie-begripcode' => '2.1.1',
+			'--informatiecategorie-begripbegrippenlijst' => 'Selectielijst ministerie van Infrastructuur en Milieu 2017',
 			'--clear' => ['identificatie'],
 		]);
 
 		$this->assertSame(Command::SUCCESS, $status);
 		$this->assertSame([
-			[42, 'bewaartermijn', ['2036-01-01'], 'occ'],
-			[42, 'zorgdrager', ['Gemeente A', 'Gemeente B'], 'occ'],
+			[42, 'bewaartermijn', ['2036-01-01'], 'occ', []],
+			[42, 'waardering', ['V'], 'occ', []],
+			[42, 'informatiecategorie', ['Primair beleid'], 'occ', ['begripCode' => '2.1.1', 'begripBegrippenlijst' => 'Selectielijst ministerie van Infrastructuur en Milieu 2017']],
+			[42, 'zorgdrager', ['Gemeente A', 'Gemeente B'], 'occ', []],
 		], $calls);
 		$this->assertStringContainsString('zorgdrager: Gemeente A (administrator)', $tester->getDisplay());
 	}

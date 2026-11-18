@@ -36,7 +36,7 @@ class AdministratorSource implements IMetadataSource {
 			if ($field === null || $values === []) {
 				continue;
 			}
-			$details = ['setBy' => $manual->getSetBy()];
+			$details = $manual->getDetails() + ['setBy' => $manual->getSetBy()];
 			if ($manual->getSetAt() > 0) {
 				$details['setAt'] = (new DateTimeImmutable('@' . $manual->getSetAt()))->format(DATE_ATOM);
 			}

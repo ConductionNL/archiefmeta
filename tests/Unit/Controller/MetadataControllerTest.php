@@ -59,7 +59,7 @@ class MetadataControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$data = $response->getData();
 		$this->assertSame(42, $data['fileId']);
-		$this->assertSame(['classificatie', 'bewaartermijn', 'zorgdrager', 'identificatie'], array_column($data['fields'], 'field'));
+		$this->assertSame(['classificatie', 'bewaartermijn', 'waardering', 'informatiecategorie', 'zorgdrager', 'identificatie'], array_column($data['fields'], 'field'));
 		$this->assertNull($data['fields'][0]['value']);
 		$this->assertSame([
 			'values' => ['2036-01-01T00:00:00+00:00'],

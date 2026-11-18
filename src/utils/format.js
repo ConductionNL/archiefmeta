@@ -20,6 +20,10 @@ export function fieldLabel(field) {
 			return t('archiefmeta', 'Classification')
 		case 'bewaartermijn':
 			return t('archiefmeta', 'Retention period')
+		case 'waardering':
+			return t('archiefmeta', 'Appraisal')
+		case 'informatiecategorie':
+			return t('archiefmeta', 'Selection list category')
 		case 'zorgdrager':
 			return t('archiefmeta', 'Custodian')
 		case 'identificatie':
@@ -48,13 +52,17 @@ export function formatDate(value, withTime = false) {
 }
 
 /**
- * The displayed text of one value of a field.
+ * The displayed text of one value of a field. A begrip label is followed by its code.
  *
  * @param {string} field MDTO element name
  * @param {string} value raw value
+ * @param {Record<string, string>} details details from the server
  * @return {string}
  */
-export function formatValue(field, value) {
+export function formatValue(field, value, details = {}) {
+	if (details.begripCode && details.begripCode !== value) {
+		return `${value} (${details.begripCode})`
+	}
 	if (field !== 'bewaartermijn') {
 		return value
 	}
@@ -84,6 +92,9 @@ export function formatDetails(details) {
 		lines.push(details.legalHold === 'ON'
 			? t('archiefmeta', 'Legal hold: on')
 			: t('archiefmeta', 'Legal hold: off'))
+	}
+	if (details.begripBegrippenlijst) {
+		lines.push(t('archiefmeta', 'List: {list}', { list: details.begripBegrippenlijst }))
 	}
 	if (details.kenmerkSysteem) {
 		lines.push(t('archiefmeta', 'Issued by: {system}', { system: details.kenmerkSysteem }))

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\ArchiefMeta\Command;
 
 use InvalidArgumentException;
+use OCA\ArchiefMeta\Model\Begrip;
 use OCA\ArchiefMeta\Model\Field;
 use OCA\ArchiefMeta\Service\ManualValueService;
 use OCA\ArchiefMeta\Service\MetadataRefresher;
@@ -23,7 +24,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * occ archiefmeta:set <path|fileid> [--classificatie=..] [--zorgdrager=..]... [--bewaartermijn=..] [--identificatie=..] [--clear=<field>]... [--clear-all]
+ * occ archiefmeta:set <path|fileid> [--classificatie=..] [--zorgdrager=..]... [--bewaartermijn=..] [--identificatie=..]
+ *   [--waardering=..] [--informatiecategorie=..] [--<waardering|informatiecategorie>-begripcode=..]
+ *   [--<waardering|informatiecategorie>-begripbegrippenlijst=..]
+ *   [--clear=<field>]... [--clear-all]
  *
  * Values set here have the source "administrator". The storage layer still wins
  * for any field it has a value for.
@@ -49,10 +53,16 @@ class SetValues extends Command {
 			$description = match ($field) {
 				Field::Classificatie => 'Classification; repeat for more than one',
 				Field::Bewaartermijn => 'Retain until date, such as 2036-01-01',
+				Field::Waardering => 'Appraisal: B, V or N, or its MDTO label such as "Tijdelijk te bewaren"',
+				Field::Informatiecategorie => 'Selectielijst category label, such as "Primair beleid"',
 				Field::Zorgdrager => 'Custodian organisation; repeat for more than one',
 				Field::Identificatie => 'Identifier of the record',
 			};
 			$this->addOption($field->value, null, $mode, $description);
+			if ($field->isBegrip()) {
+				$this->addOption($field->value . '-begripcode', null, InputOption::VALUE_REQUIRED, 'begripCode of the ' . $field->value . ', such as 2.1.1');
+				$this->addOption($field->value . '-begripbegrippenlijst', null, InputOption::VALUE_REQUIRED, 'begripBegrippenlijst of the ' . $field->value . ', such as "Selectielijst gemeenten 2020"');
+			}
 		}
 	}
 
@@ -83,7 +93,11 @@ class SetValues extends Command {
 				if ($option === null || $values === []) {
 					continue;
 				}
-				$this->manualValues->set($node->getId(), $field, $values, 'occ');
+				$details = $field->isBegrip() ? array_filter([
+					Begrip::CODE => (string)$input->getOption($field->value . '-begripcode'),
+					Begrip::BEGRIPPENLIJST => (string)$input->getOption($field->value . '-begripbegrippenlijst'),
+				], static fn (string $value): bool => $value !== '') : [];
+				$this->manualValues->set($node->getId(), $field, $values, 'occ', $details);
 			}
 		} catch (InvalidArgumentException $e) {
 			$output->writeln('<error>' . $e->getMessage() . '</error>');

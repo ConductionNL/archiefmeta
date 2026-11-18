@@ -13,6 +13,7 @@ use Aws\Exception\AwsException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\ArchiefMeta\Model\Begrip;
 use OCA\ArchiefMeta\Model\Field;
 use OCA\ArchiefMeta\Model\FieldValue;
 use OCA\ArchiefMeta\Model\Source;
@@ -27,14 +28,20 @@ use Throwable;
  * - bewaartermijn: Object Lock retention (GetObjectRetention) and legal hold
  *   (GetObjectLegalHold). Falls back to the object metadata key when the object
  *   has no lock.
- * - classificatie, zorgdrager, identificatie: user metadata (x-amz-meta-mdto-*),
- *   then object tags with the same names. Multiple values are separated by ";"
- *   or given in numbered keys (mdto-zorgdrager-1, mdto-zorgdrager-2).
- *   Values may be percent-encoded UTF-8.
+ * - classificatie, waardering, informatiecategorie, zorgdrager, identificatie:
+ *   user metadata (x-amz-meta-mdto-*), then object tags with the same names.
+ *   Multiple values are separated by ";" or given in numbered keys
+ *   (mdto-zorgdrager-1, mdto-zorgdrager-2). Values may be percent-encoded UTF-8.
+ * - waardering and informatiecategorie hold the begripLabel; begripCode and
+ *   begripBegrippenlijst come from "<key>-begripcode" and "<key>-begripbegrippenlijst"
+ *   in the same place. A waardering given as an MDTO code or label is completed
+ *   from the MDTO list.
  */
 class S3MetadataSource implements IMetadataSource {
 	public const KEY_PREFIX = 'mdto-';
 	public const KEY_IDENTIFICATIE_SYSTEEM = 'mdto-identificatie-systeem';
+	public const SUFFIX_BEGRIP_CODE = '-begripcode';
+	public const SUFFIX_BEGRIP_BEGRIPPENLIJST = '-begripbegrippenlijst';
 	public const RETENTION_INDEFINITE = 'indefinite';
 
 	/** S3 error codes that mean "this object or bucket has no such setting". */
@@ -79,7 +86,7 @@ class S3MetadataSource implements IMetadataSource {
 			$values[] = $this->fieldValue(Field::Bewaartermijn, $found[0], $found[1], $readAt);
 		}
 
-		foreach ([Field::Classificatie, Field::Zorgdrager, Field::Identificatie] as $field) {
+		foreach ([Field::Classificatie, Field::Waardering, Field::Informatiecategorie, Field::Zorgdrager, Field::Identificatie] as $field) {
 			$found = $lookup($field);
 			if ($found === null) {
 				continue;
@@ -91,10 +98,36 @@ class S3MetadataSource implements IMetadataSource {
 					$details['kenmerkSysteem'] = rawurldecode($system);
 				}
 			}
+			if ($field->isBegrip()) {
+				[$found[0], $details] = $this->begrip($field, $found[0], $found[1] === Source::S3ObjectMetadata ? $metadata : ($tags ?? []));
+			}
 			$values[] = $this->fieldValue($field, $found[0], $found[1], $readAt, $details);
 		}
 
 		return array_values(array_filter($values));
+	}
+
+	/**
+	 * The begripCode and begripBegrippenlijst next to a begrip label, read from
+	 * the map the label came from.
+	 *
+	 * @param list<string> $raw
+	 * @param array<string, string> $map
+	 * @return array{0: list<string>, 1: array<string, string>}
+	 */
+	private function begrip(Field $field, array $raw, array $map): array {
+		$name = self::KEY_PREFIX . $field->value;
+		$details = array_filter([
+			Begrip::CODE => trim(rawurldecode($map[$name . self::SUFFIX_BEGRIP_CODE] ?? '')),
+			Begrip::BEGRIPPENLIJST => trim(rawurldecode($map[$name . self::SUFFIX_BEGRIP_BEGRIPPENLIJST] ?? '')),
+		], static fn (string $value): bool => $value !== '');
+		if ($field === Field::Waardering) {
+			$known = Begrip::waardering(rawurldecode($raw[0] ?? ''), $details);
+			if ($known !== null) {
+				return [[$known[0]], $known[1]];
+			}
+		}
+		return [$raw, $details];
 	}
 
 	/**

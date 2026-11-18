@@ -103,10 +103,10 @@ watch([fileId, () => props.active], load, { immediate: true })
 					<dd v-else class="archiefmeta-tab__value">
 						<ul v-if="item.value.values.length > 1" class="archiefmeta-tab__list">
 							<li v-for="value in item.value.values" :key="value">
-								{{ formatValue(item.field, value) }}
+								{{ formatValue(item.field, value, item.value.details) }}
 							</li>
 						</ul>
-						<span v-else class="archiefmeta-tab__single">{{ formatValue(item.field, item.value.values[0]) }}</span>
+						<span v-else class="archiefmeta-tab__single">{{ formatValue(item.field, item.value.values[0], item.value.details) }}</span>
 
 						<p v-if="item.value.source === 'nextcloud-fileid'" class="archiefmeta-tab__warning">
 							{{ t('archiefmeta', 'This is the Nextcloud file ID. It is not a durable identifier yet.') }}

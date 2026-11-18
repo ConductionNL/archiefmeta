@@ -15,6 +15,8 @@ namespace OCA\ArchiefMeta\Model;
 enum Field: string {
 	case Classificatie = 'classificatie';
 	case Bewaartermijn = 'bewaartermijn';
+	case Waardering = 'waardering';
+	case Informatiecategorie = 'informatiecategorie';
 	case Zorgdrager = 'zorgdrager';
 	case Identificatie = 'identificatie';
 
@@ -23,5 +25,13 @@ enum Field: string {
 	 */
 	public function isMultiple(): bool {
 		return $this === self::Zorgdrager || $this === self::Classificatie;
+	}
+
+	/**
+	 * Whether the field is an MDTO begripGegevens whose code and begrippenlijst
+	 * are kept as details next to the label.
+	 */
+	public function isBegrip(): bool {
+		return $this === self::Waardering || $this === self::Informatiecategorie;
 	}
 }

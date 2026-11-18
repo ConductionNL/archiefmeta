@@ -33,21 +33,29 @@ class AdministratorAndFileIdSourceTest extends TestCase {
 		$zorgdrager->setValues(['Gemeente A', 'Gemeente B']);
 		$zorgdrager->setSetBy('occ');
 		$zorgdrager->setSetAt(1763287200);
+		$waardering = new ManualValue();
+		$waardering->setField('waardering');
+		$waardering->setValues(['Blijvend te bewaren']);
+		$waardering->setDetails(['begripCode' => 'B', 'begripBegrippenlijst' => 'Begrippenlijst Waarderingen MDTO']);
+		$waardering->setSetBy('occ');
 		$unknown = new ManualValue();
 		$unknown->setField('not-a-field');
 		$unknown->setValues(['x']);
 
 		$mapper = $this->createMock(ManualValueMapper::class);
-		$mapper->expects($this->once())->method('findByFileId')->with(7)->willReturn([$zorgdrager, $unknown]);
+		$mapper->expects($this->once())->method('findByFileId')->with(7)->willReturn([$zorgdrager, $waardering, $unknown]);
 
 		$values = (new AdministratorSource($mapper))->read($this->file(7), new DateTimeImmutable('2026-11-16T10:00:00+00:00'));
 
-		$this->assertCount(1, $values);
+		$this->assertCount(2, $values);
 		$this->assertSame(Field::Zorgdrager, $values[0]->field);
 		$this->assertSame(['Gemeente A', 'Gemeente B'], $values[0]->values);
 		$this->assertSame(Source::Administrator, $values[0]->source);
 		$this->assertSame('occ', $values[0]->details['setBy']);
 		$this->assertSame('2025-11-16T10:00:00+00:00', $values[0]->details['setAt']);
+		$this->assertSame(Field::Waardering, $values[1]->field);
+		$this->assertSame(['Blijvend te bewaren'], $values[1]->values);
+		$this->assertSame(['begripCode' => 'B', 'begripBegrippenlijst' => 'Begrippenlijst Waarderingen MDTO', 'setBy' => 'occ'], $values[1]->details);
 	}
 
 	public function testFileIdIsReportedWithInstanceAndNotDurableSource(): void {

@@ -77,6 +77,10 @@ class S3MetadataSourceTest extends TestCase {
 				'mdto-zorgdrager' => 'Gemeente Zuiddrecht; Regionaal%20Archief',
 				'mdto-identificatie' => 'ZD-2026-0001',
 				'mdto-identificatie-systeem' => 'Zaaksysteem',
+				'mdto-waardering' => 'V',
+				'mdto-informatiecategorie' => 'Primair%20beleid',
+				'mdto-informatiecategorie-begripcode' => '2.1.1',
+				'mdto-informatiecategorie-begripbegrippenlijst' => 'Selectielijst ministerie van Infrastructuur en Milieu 2017',
 			]],
 			'GetObjectRetention' => ['Retention' => ['Mode' => 'GOVERNANCE', 'RetainUntilDate' => new DateTimeImmutable('2036-01-01T12:00:00+01:00')]],
 			'GetObjectLegalHold' => ['LegalHold' => ['Status' => 'OFF']],
@@ -91,6 +95,11 @@ class S3MetadataSourceTest extends TestCase {
 		$this->assertSame(['ZD-2026-0001'], $values['identificatie']->values);
 		$this->assertSame(['kenmerkSysteem' => 'Zaaksysteem'], $values['identificatie']->details);
 		$this->assertSame('2026-11-16T10:00:00+00:00', $values['identificatie']->readAt->format(DATE_ATOM));
+		$this->assertSame(['Tijdelijk te bewaren'], $values['waardering']->values);
+		$this->assertSame(Source::S3ObjectMetadata, $values['waardering']->source);
+		$this->assertSame(['begripCode' => 'V', 'begripBegrippenlijst' => 'Begrippenlijst Waarderingen MDTO'], $values['waardering']->details);
+		$this->assertSame(['Primair beleid'], $values['informatiecategorie']->values);
+		$this->assertSame(['begripCode' => '2.1.1', 'begripBegrippenlijst' => 'Selectielijst ministerie van Infrastructuur en Milieu 2017'], $values['informatiecategorie']->details);
 		$this->assertNotContains('GetObjectTagging', $this->calls, 'Tags are only read when metadata lacks a field');
 	}
 
@@ -112,6 +121,26 @@ class S3MetadataSourceTest extends TestCase {
 		$this->assertSame(Source::S3ObjectTags, $values['classificatie']->source);
 		$this->assertSame(['Gemeente A', 'Regionaal Archief'], $values['zorgdrager']->values);
 		$this->assertArrayNotHasKey('identificatie', $values);
+	}
+
+	public function testBegripDetailsComeFromTheTagsTheLabelCameFrom(): void {
+		$values = $this->read([
+			'HeadObject' => ['Metadata' => ['mdto-informatiecategorie-begripcode' => 'ignored, the label is a tag']],
+			'GetObjectRetention' => 'NoSuchObjectLockConfiguration',
+			'GetObjectLegalHold' => 'NoSuchObjectLockConfiguration',
+			'GetObjectTagging' => ['TagSet' => [
+				['Key' => 'mdto-waardering', 'Value' => 'Vernietigen'],
+				['Key' => 'mdto-waardering-begripcode', 'Value' => 'V'],
+				['Key' => 'mdto-waardering-begripbegrippenlijst', 'Value' => 'Selectielijst gemeenten 2020'],
+				['Key' => 'mdto-informatiecategorie', 'Value' => 'Primair beleid'],
+			]],
+		]);
+
+		$this->assertSame(Source::S3ObjectTags, $values['waardering']->source);
+		$this->assertSame(['Vernietigen'], $values['waardering']->values, 'A waardering from another list is kept as given');
+		$this->assertSame(['begripCode' => 'V', 'begripBegrippenlijst' => 'Selectielijst gemeenten 2020'], $values['waardering']->details);
+		$this->assertSame(['Primair beleid'], $values['informatiecategorie']->values);
+		$this->assertSame([], $values['informatiecategorie']->details);
 	}
 
 	public function testLegalHoldWithoutRetentionHasNoEndDate(): void {

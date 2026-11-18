@@ -22,7 +22,7 @@ archiefmeta covers one part of that: it makes the metadata from the storage laye
 ## What it does
 
 - Adds a read-only **Archive** tab (Dutch: **Archief**) to the Files sidebar.
-- Shows four fields named after their MDTO element: `classificatie`, `bewaartermijn`, `zorgdrager` and `identificatie`.
+- Shows six fields named after their MDTO element: `classificatie`, `bewaartermijn`, `waardering`, `informatiecategorie`, `zorgdrager` and `identificatie`.
 - Shows for every value its source and when it was read.
 - Refuses every edit, through WebDAV and through its own API.
 

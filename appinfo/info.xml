@@ -14,8 +14,8 @@ The values come from the storage layer: S3 Object Lock retention and legal hold,
 
 Users cannot change the values. The app stores them as Nextcloud file metadata that core refuses to edit over WebDAV, and it offers no write endpoint.
 
-Fields follow MDTO, the Dutch metadata standard for durable government information: classificatie, bewaartermijn, zorgdrager and identificatie.]]></description>
-	<version>0.1.0</version>
+Fields follow MDTO, the Dutch metadata standard for durable government information: classificatie, bewaartermijn, waardering, informatiecategorie, zorgdrager and identificatie.]]></description>
+	<version>0.1.1</version>
 	<licence>agpl</licence>
 	<author mail="info@conduction.nl" homepage="https://conduction.nl">Conduction B.V.</author>
 	<namespace>ArchiefMeta</namespace>
