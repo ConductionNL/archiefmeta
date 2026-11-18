@@ -8,6 +8,8 @@ description: What Nextcloud 34 does when it deletes a file on an S3 bucket with 
 
 Evidence for [nextcloud/server#66498](https://github.com/nextcloud/server/issues/66498): what Nextcloud does when the storage layer should refuse a delete. Tested on 16 November 2026 against Nextcloud 34.0.0.12 with MinIO. The delete paths are identical on Nextcloud `master` of the same day (see the last section).
 
+The same tests in COMPLIANCE mode, on Ceph RGW and on Nextcloud 35.0.3 are on [S3 Object Lock on Ceph RGW and in COMPLIANCE mode](./s3-object-lock-ceph-compliance.md).
+
 ## Summary
 
 | Scenario | Storage | What Nextcloud answers | What happens to the bytes | Logged |
