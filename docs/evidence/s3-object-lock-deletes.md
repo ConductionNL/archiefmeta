@@ -22,7 +22,7 @@ The same tests in COMPLIANCE mode, on Ceph RGW and on Nextcloud 35.0.3 are on [S
 | D | External locked bucket, legal hold on | 204 | Delete marker; the version under legal hold stays | Nothing |
 | E (control) | External bucket without versioning or lock | 204 | Objects really deleted | Nothing |
 | F | External bucket, policy denies `s3:DeleteObject` | 403 with an empty message, file and folder stay | Untouched | Error per attempt |
-| G | External bucket, policy denies deletes inside the folder only | 204 | Untouched; the folder and files reappear in Nextcloud with new file IDs | Only "trash move failed" with the trash bin on, nothing with it off |
+| G | External bucket, policy denies deletes inside the folder only | 204 | Untouched; the folder and files get new file IDs within the same DELETE request, no rescan needed (re-checked 2026-11-19 on 35.0.3 and Ceph RGW) | Only "trash move failed" with the trash bin on, nothing with it off |
 
 In short: Nextcloud sends deletes without a version ID. On a bucket with Object Lock that creates a delete marker. Nextcloud reports success and removes the file from its index, while the locked bytes stay in the bucket. Deleting the locked version itself is refused by the storage (last sections). A refusal that does reach Nextcloud shows as a bare 403 without a reason.
 

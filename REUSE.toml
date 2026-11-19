@@ -6,7 +6,7 @@ SPDX-PackageSupplier = "Conduction B.V. <info@conduction.nl>"
 SPDX-PackageDownloadLocation = "https://github.com/ConductionNL/archiefmeta"
 
 [[annotations]]
-path = ["l10n/**", "composer.json", "composer.lock", "package.json", "package-lock.json", "docs/screenshots/**", "docs/**/*.md", "docs/**/*.mdx", "docs/**/_category_.json", "docs/package.json", "docs/package-lock.json", "docs/docusaurus.config.js", "docs/sidebars.js"]
+path = ["l10n/**", "composer.json", "composer.lock", "package.json", "package-lock.json", "docs/screenshots/**", "docs/static/**", "docs/**/*.md", "docs/**/*.mdx", "docs/**/_category_.json", "docs/package.json", "docs/package-lock.json", "docs/docusaurus.config.js", "docs/sidebars.js"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Conduction B.V."
 SPDX-License-Identifier = "AGPL-3.0-or-later"
