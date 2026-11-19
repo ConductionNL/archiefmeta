@@ -25,6 +25,7 @@ description: Voortgangsnotitie archiefwaardige opslag, 11 t/m 24 november 2026. 
 - 18 november 2026: tests in compliance-modus en op Ceph RGW 19.2 afgerond, op Nextcloud 35.0.3. Nextcloud gedraagt zich overal hetzelfde: succes melden waar niets is verwijderd. Zie de [testresultaten](../../evidence/s3-object-lock-ceph-compliance.md).
 - 18 november 2026: de MDTO-waardering en de informatiecategorie toegevoegd aan de zijbalk ([ConductionNL/archiefmeta#5](https://github.com/ConductionNL/archiefmeta/pull/5)).
 - 19 november 2026: demonstratie van D3 opgenomen op Nextcloud 35.0.3 met Ceph RGW, inclusief de Verkenner uit de demo van de gemeente Haarlem, live gekoppeld: [Demonstratie D3](../demo-d3.mdx). Daarbij bleek dat bestands-ID's al tijdens het verwijderen veranderen, zonder herscan.
+- 19 november 2026: de bevindingen uit de demonstratie verwerkt. Verzoek 2 bestaat grotendeels al als de app files_versions_s3 van Nextcloud; D1 is daarop gecorrigeerd. Met die app weigert de opslag het verwijderen van een vergrendelde versie echt, maar Nextcloud meldt een serverfout. Dat is opgenomen in [D2 Ontwerp](../d2-ontwerp.mdx). De grens van tien S3-tags per object staat op de pagina [MDTO-afstemming](../mdto.mdx).
 
 ## Gepland
 

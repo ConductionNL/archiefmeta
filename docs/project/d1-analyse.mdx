@@ -43,7 +43,7 @@ Nextcloud heeft bouwstenen voor alle drie verzoeken, maar geen ervan is af. Onde
 | Verzoek | Component | Benodigde interface | Status bij Nextcloud | Deze iteratie |
 | --- | --- | --- | --- | --- |
 | 1. Wijzigingsmeldingen uit de opslaglaag | Server, opslaglaag | Een ontvanger voor meldingen die de opslag stuurt, die één bestand bijwerkt in plaats van te scannen. Ook voor een wijziging van alleen metagegevens. Zie [hieronder](#interfaces-voor-verzoek-1-en-2). | Core kent `INotifyStorage`, alleen voor SMB; geen voorstel voor S3 | Analyse |
-| 2. Gedelegeerde versiegeschiedenis | Server (`files_versions`), opslaglaag | Een versiebron die de versies van de opslag toont, met de versie-ID van de opslag als sleutel. Zie [hieronder](#interfaces-voor-verzoek-1-en-2). | Versiebronnen (`IVersionBackend`) bestaan; geen voorstel voor S3 | Analyse |
+| 2. Gedelegeerde versiegeschiedenis | Server (`files_versions`), opslaglaag | Een versiebron die de versies van de opslag toont, met de versie-ID van de opslag als sleutel. Zie [hieronder](#interfaces-voor-verzoek-1-en-2). | Bestaat als app: [files_versions_s3](https://github.com/nextcloud/files_versions_s3). Een geweigerde verwijdering geeft nog HTTP 500 | Analyse |
 | 3. Metagegevens uit de opslaglaag, alleen-lezen | Server (schema-API), integratie-app, opslaglaag | Getypeerde velden met wijzigrecht in core; weergave met bron in een app | [PR 66355](https://github.com/nextcloud/server/pull/66355) open (Nextcloud 36) | **D3**, als app |
 | 4. Bestuurde verwijdering | Opslaglaag, Server, objectenregister | Een getypeerde weigering met reden en een gebeurtenis voor logging; Object Lock-bewust verwijderen op S3 | [Issue 66498](https://github.com/nextcloud/server/issues/66498) open | **D2** |
 | 5. Duurzame objectidentiteit | Server, opslaglaag | Een identificatie per record, oplosbaar naar de actuele locatie | [Issue 66499](https://github.com/nextcloud/server/issues/66499) open; Nextcloud werkt aan hash-identiteit | **D5** |
@@ -71,15 +71,17 @@ Beide verzoeken bouwen we niet in deze iteratie. Wel leggen we vast welke interf
 
 ### Verzoek 2: gedelegeerde versiegeschiedenis
 
-**Wat er is.** `files_versions` laat een app een versiebron registreren met `IVersionBackend`. Die levert de versies van een bestand, maakt een versie, zet een versie terug en leest een versie. `IVersion::getRevisionId()` mag een tekst teruggeven, dus een S3-versie-ID past.
+**Wat er is.** Meer dan we eerst schreven. `files_versions` laat een app een versiebron registreren met `IVersionBackend`. De app [files_versions_s3](https://github.com/nextcloud/files_versions_s3) van Nextcloud zelf doet dat voor S3: ze toont de versies van de bucket als versies in Nextcloud, met de S3-versie-ID als sleutel. Terugzetten kopieert de oude versie naar een nieuwe. De app werkt op Nextcloud 33 tot en met 35.
+
+Getest op 19 november 2026, Nextcloud 35.0.3 met Ceph RGW en Object Lock: de versies komen uit de opslag. Een oude versie verwijderen weigert de opslag echt, omdat de app met versie-ID verwijdert. Dat is de eerste plek in Nextcloud waar het slot van de opslag doorwerkt.
 
 **Wat ontbreekt.**
 
-- Een versiebron voor S3. Nextcloud bewaart versies zelf als kopie, ook als de bucket al versiebeheer heeft. Op een bucket met Object Lock staat elke versie dan twee keer vast.
-- `IVersionBackend::getRevision(Node)` (sinds Nextcloud 32) geeft een getal terug. Een S3-versie-ID is een tekst.
-- Terugzetten maakt op S3 een nieuwe versie van een oude. Het overschrijft niets. Dat hoort de gebruiker zo te zien.
+- **De weigering netjes melden.** Weigert de opslag het verwijderen van een versie, dan antwoordt Nextcloud met een serverfout (HTTP 500) in plaats van "niet toegestaan" met de reden. Hetzelfde patroon als bij verzoek 4.
+- **Externe opslag.** Volgens de app zelf gaan oude versies verloren als een bestand op externe S3-opslag wordt verplaatst of hernoemd. Op primaire opslag speelt dat niet.
+- **Opruimen.** De app ruimt geen oude versies op; dat laat ze aan de levenscyclusregels van de opslag. Voor archieven is dat juist goed: een versie onder een slot hoort niet automatisch te verdwijnen.
 
-**Benodigde interface.** Een `IVersionBackend` voor S3 die versies opvraagt bij de opslag, een versie leest op versie-ID, en terugzet door de oude versie te kopiëren. Daarvoor moet `getRevision()` een tekst accepteren. Voor S3 schrijft Nextcloud dan geen eigen kopie meer.
+**Benodigde interface.** Grotendeels aanwezig. Wat overblijft past in files_versions_s3: een geweigerde verwijdering vertalen naar "niet toegestaan" met de reden, en versies bewaren bij verplaatsen op externe opslag.
 
 ## Besluitvoorstel: vier architectuurkeuzes
 

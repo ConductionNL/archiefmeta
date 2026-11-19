@@ -53,4 +53,23 @@ De app toont classificatie, bewaartermijn, zorgdrager en identificatie. Dat is h
 
 Een MDTO-export valt buiten deze iteratie. De D1-analyse wijst haar toe aan een archief-app.
 
+## Waar een veld in de opslag hoort: tags of objectmetadata
+
+S3 kent twee plekken voor metagegevens bij een object. archiefmeta leest beide. Ze gedragen zich anders op een bucket met versiebeheer:
+
+| | Tags | Objectmetadata (`x-amz-meta-*`) |
+| --- | --- | --- |
+| Wijzigen | Kan zonder nieuwe versie | Alleen door het object opnieuw te schrijven: een nieuwe versie |
+| Gevolg met Object Lock | Geen | De nieuwe versie krijgt de standaardbewaartermijn van de bucket opnieuw |
+| Grens | Maximaal tien tags per object, beperkte tekens | Ruimer |
+
+Daarom stellen we voor:
+
+- **Velden die kunnen wijzigen** in tags, of in het register: classificatie, waardering, informatiecategorie, zorgdrager.
+- **Velden die bij de inhoud horen** in objectmetadata: de identificatie die bij het schrijven ontstaat.
+
+De grens van tien tags is snel bereikt. Waardering en informatiecategorie vragen elk een label, een code en een lijst. Het besluit in de demonstratie gebruikt daarmee acht tags, en een derde zorgdrager past er niet meer bij. Voor meer dan een paar velden hoort de bron het register te zijn (keuze b), met de opslag als handhaver van de bewaartermijn.
+
+Gezien in de tests en de demonstratie van 18 en 19 november 2026: een tag wijzigen veranderde niets aan versie of slot. Objectmetadata wijzigen schreef een nieuwe versie met een nieuw slot.
+
 </div>
