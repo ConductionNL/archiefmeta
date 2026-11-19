@@ -37,6 +37,12 @@ We vragen weinig van core, en geen bedrijfsregels in de opslag. Het register bep
 
 Route 1a geeft een goede melding en kost een extra verzoek per object. Route 1b is het echte slot. We stellen voor beide te doen: vooraf vragen voor de melding, per versie verwijderen als vangnet.
 
+## Een eerste plek waar het slot al doorwerkt
+
+De app [files_versions_s3](https://github.com/nextcloud/files_versions_s3) van Nextcloud verwijdert een oude versie met de versie-ID. Op 19 november 2026 getest op Nextcloud 35.0.3 met Ceph RGW: de opslag weigert, en de versie blijft staan. Route 1b werkt daar dus al.
+
+Wat ontbreekt is stap 3: Nextcloud meldt een serverfout (HTTP 500) in plaats van "niet toegestaan" met de reden. Dat is een kleine, afgebakende wijziging in die app. Ze raakt de discussie over waar bewaartermijnen worden bepaald niet, en toont hoe een weigering eruit hoort te zien. Daarom is dit een goede eerste bijdrage.
+
 ## Vernietigen na een besluit
 
 Na een vernietigingsbesluit mag een object wel weg. Dat vraagt governance-modus en een apart opslagaccount met het recht om de retentie te omzeilen. Nextcloud gebruikt dat account niet. In compliance-modus kan niemand een object vóór de vergrendeldatum verwijderen, ook de beheerder van de opslag niet.
